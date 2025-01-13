@@ -18,7 +18,7 @@ const gemColors: Record<GemType, string> = {
 };
 
 export const GemToken = ({ gems }: GemTokenProps) => {
-  const { takeGems, showConfirm, hideConfirm, addAction, gameState } = useGameStore();
+  const { takeGems, addAction, gameState } = useGameStore();
   const [selectedGems, setSelectedGems] = useState<Partial<Record<GemType, number>>>({});
 
   // 计算玩家当前拥有的宝石总数
@@ -38,7 +38,6 @@ export const GemToken = ({ gems }: GemTokenProps) => {
 
     // 检查是否会超过10个宝石限制
     if (currentPlayerGemCount + totalSelected + 1 > 10) {
-      showConfirm("提示", "选择的宝石会导致总数超过10个，请重新选择", () => { });
       return;
     }
 
@@ -93,13 +92,11 @@ export const GemToken = ({ gems }: GemTokenProps) => {
 
     // 检查是否会超过10个宝石限制
     if (currentPlayerGemCount + 2 > 10) {
-      showConfirm("提示", "选择的宝石会导致总数超过10个，请重新选择", () => { });
       return;
     }
 
     // 检查是否有足够的宝石可选
     if (availableGems < 4) {
-      showConfirm("提示", "该颜色宝石数量少于4个，无法选择2个", () => { });
       return;
     }
 
@@ -117,40 +114,24 @@ export const GemToken = ({ gems }: GemTokenProps) => {
   };
 
   const handleConfirm = () => {
-    console.log('Selected gems:', selectedGems); // 调试日志
-
     if (Object.keys(selectedGems).length === 0) {
-      console.log('No gems selected'); // 调试日志
       return;
     }
 
-    const handleTakeGems = () => {
-      console.log('Attempting to take gems...'); // 调试日志
-      const success = takeGems(selectedGems);
-      console.log('Take gems result:', success); // 调试日志
+    const success = takeGems(selectedGems);
 
-      if (success && gameState) {
-        const currentPlayer = gameState.players[gameState.currentPlayer];
-        addAction({
-          playerId: currentPlayer.id,
-          playerName: currentPlayer.name,
-          type: 'takeGems',
-          details: {
-            gems: selectedGems
-          }
-        });
-        setSelectedGems({});
-      }
-      hideConfirm();
-    };
-
-    showConfirm(
-      "确认选择宝石",
-      `确定要选择这些宝石吗？\n${Object.entries(selectedGems)
-        .map(([gem, count]) => `${gem}: ${count}`)
-        .join('\n')}`,
-      handleTakeGems
-    );
+    if (success && gameState) {
+      const currentPlayer = gameState.players[gameState.currentPlayer];
+      addAction({
+        playerId: currentPlayer.id,
+        playerName: currentPlayer.name,
+        type: 'takeGems',
+        details: {
+          gems: selectedGems
+        }
+      });
+      setSelectedGems({});
+    }
   };
 
   return (
@@ -185,7 +166,7 @@ export const GemToken = ({ gems }: GemTokenProps) => {
       {Object.keys(selectedGems).length > 0 && (
         <button
           onClick={handleConfirm}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-fit"
         >
           确认选择
         </button>

@@ -7,8 +7,6 @@ export interface GameAction {
   details: {
     gems?: Partial<Record<GemType, number>>;
     card?: {
-      id: number;
-      points: number;
       gem: GemType;
     };
     noble?: {
@@ -59,4 +57,5 @@ export interface GameState {
   status: 'waiting' | 'playing' | 'finished';
   lastRound: boolean;
   winner: string | null;
+  actions: GameAction[];
 } 
