@@ -19,6 +19,18 @@ const GemCircle = ({ type, count }: { type: GemType; count?: number }) => (
   </div>
 );
 
+const CardSquare = ({ type, points }: { type: GemType; points?: number }) => (
+  <div className="inline-flex items-center gap-1">
+    <div className={`w-6 h-6 ${gemColors[type]} inline-flex items-center justify-center text-sm font-bold shadow-md ${type === 'onyx' ? 'text-white' : ''} relative`}>
+      {points !== undefined && points > 0 && (
+        <span className="absolute -top-2 -right-2 bg-purple-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs">
+          {points}
+        </span>
+      )}
+    </div>
+  </div>
+);
+
 export const ActionHistory = () => {
   const actionHistory = useGameStore((state: GameStore) => state.actionHistory);
 
@@ -40,10 +52,7 @@ export const ActionHistory = () => {
           <div className="flex items-center gap-2">
             <span>{action.playerName} 购买了</span>
             <div className="flex items-center gap-1">
-              <GemCircle type={action.details.card?.gem as GemType} />
-              {action.details.card?.points && action.details.card.points > 0 && (
-                <span className="text-purple-600 font-bold">+{action.details.card.points}分</span>
-              )}
+              <CardSquare type={action.details.card?.gem as GemType} points={action.details.card?.points} />
             </div>
           </div>
         );
@@ -52,10 +61,7 @@ export const ActionHistory = () => {
           <div className="flex items-center gap-2">
             <span>{action.playerName} 预留了</span>
             <div className="flex items-center gap-1">
-              <GemCircle type={action.details.card?.gem as GemType} />
-              {action.details.card?.points && action.details.card.points > 0 && (
-                <span className="text-purple-600 font-bold">+{action.details.card.points}分</span>
-              )}
+              <CardSquare type={action.details.card?.gem as GemType} points={action.details.card?.points} />
             </div>
             {action.details.gems?.gold && (
               <div className="flex items-center gap-1">
