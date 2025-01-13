@@ -50,8 +50,14 @@ export class GameActions {
       } else {
         // 使用黄金补足差额
         const remaining = cost - playerGems;
+        const availableGold = player.gems.gold || 0;
+
+        if (availableGold < remaining) {
+          throw new Error('Not enough gold tokens');
+        }
+
         player.gems[gemType] = 0;
-        player.gems.gold = (player.gems.gold || 0) - remaining;
+        player.gems.gold = availableGold - remaining;
         newState.gems.gold = (newState.gems.gold || 0) + remaining;
       }
     });

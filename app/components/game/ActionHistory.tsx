@@ -39,11 +39,32 @@ export const ActionHistory = () => {
         return (
           <div className="flex items-center gap-2">
             <span>{action.playerName} 购买了</span>
-            <GemCircle type={action.details.card?.gem as GemType} />
+            <div className="flex items-center gap-1">
+              <GemCircle type={action.details.card?.gem as GemType} />
+              {action.details.card?.points && action.details.card.points > 0 && (
+                <span className="text-purple-600 font-bold">+{action.details.card.points}分</span>
+              )}
+            </div>
           </div>
         );
       case 'reserveCard':
-        return `${action.playerName} 预留了一张卡牌`;
+        return (
+          <div className="flex items-center gap-2">
+            <span>{action.playerName} 预留了</span>
+            <div className="flex items-center gap-1">
+              <GemCircle type={action.details.card?.gem as GemType} />
+              {action.details.card?.points && action.details.card.points > 0 && (
+                <span className="text-purple-600 font-bold">+{action.details.card.points}分</span>
+              )}
+            </div>
+            {action.details.gems?.gold && (
+              <div className="flex items-center gap-1">
+                <span>并获得了</span>
+                <GemCircle type="gold" count={1} />
+              </div>
+            )}
+          </div>
+        );
       case 'acquireNoble':
         return (
           <div className="flex items-center gap-2">

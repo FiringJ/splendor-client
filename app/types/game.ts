@@ -8,6 +8,7 @@ export interface GameAction {
     gems?: Partial<Record<GemType, number>>;
     card?: {
       gem: GemType;
+      points: number;
     };
     noble?: {
       id: number;

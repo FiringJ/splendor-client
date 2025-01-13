@@ -90,6 +90,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const newState = GameActions.purchaseCard(get().gameState!, card);
       set({ gameState: newState });
+
+      // 添加操作历史
+      get().addAction({
+        type: 'purchaseCard',
+        playerId: newState.players[newState.currentPlayer].id,
+        playerName: newState.players[newState.currentPlayer].name,
+        details: {
+          card: {
+            gem: card.gem,
+            points: card.points
+          }
+        }
+      });
+
       return true;
     } catch (error) {
       console.error(error);
@@ -99,8 +113,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   reserveCard: (card: Card) => {
     try {
-      const newState = GameActions.reserveCard(get().gameState!, card);
+      const state = get().gameState!;
+      const newState = GameActions.reserveCard(state, card);
       set({ gameState: newState });
+
+      // 添加操作历史
+      get().addAction({
+        type: 'reserveCard',
+        playerId: newState.players[newState.currentPlayer].id,
+        playerName: newState.players[newState.currentPlayer].name,
+        details: {
+          card: {
+            gem: card.gem,
+            points: card.points
+          },
+          gems: state.gems.gold > 0 ? { gold: 1 } : undefined
+        }
+      });
+
       return true;
     } catch (error) {
       console.error(error);
