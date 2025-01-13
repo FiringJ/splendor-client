@@ -19,7 +19,6 @@ export const NobleDisplay = ({ nobles }: NobleDisplayProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-lg font-bold text-purple-800">贵族区域</h3>
       <div className="flex gap-4 flex-wrap">
         {nobles.map((noble) => {
           const canAcquire = GameValidator.canAcquireNoble(noble, currentPlayer);

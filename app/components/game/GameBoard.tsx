@@ -18,9 +18,12 @@ export const GameBoard = () => {
   if (!gameState) return null;
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <GameStatus />
-      <ActionHistory />
+    <div className="flex flex-col gap-2 p-2 max-h-screen overflow-auto">
+      <div className="flex justify-between items-start gap-2">
+        <GameStatus />
+        <ActionHistory />
+      </div>
+
       {confirmDialog && (
         <ConfirmDialog
           isOpen={confirmDialog.isOpen}
@@ -33,32 +36,42 @@ export const GameBoard = () => {
           onCancel={() => useGameStore.getState().hideConfirm()}
         />
       )}
-      <div className="game-area">
-        {/* 贵族区域 */}
-        <div className="nobles-area">
-          <NobleDisplay nobles={gameState.nobles} />
+
+      <div className="game-area grid grid-cols-[1fr_2fr_1fr] gap-2">
+        {/* 左侧：贵族区域 */}
+        <div className="nobles-area flex flex-col gap-2">
+          <h3 className="text-lg font-bold text-purple-800">贵族区域</h3>
+          <div className="grid grid-cols-1 gap-2">
+            <NobleDisplay nobles={gameState.nobles} />
+          </div>
         </div>
 
-        {/* 卡牌区域 */}
-        <div className="cards-area">
+        {/* 中间：卡牌区域 */}
+        <div className="cards-area flex flex-col gap-2">
+          <h3 className="text-lg font-bold text-gray-800">发展卡</h3>
           <CardDisplay cards={gameState.cards} />
         </div>
 
-        {/* 宝石区域 */}
-        <div className="gems-area">
-          <GemToken gems={gameState.gems} />
-        </div>
-      </div>
+        {/* 右侧：宝石和玩家信息 */}
+        <div className="right-area flex flex-col gap-2">
+          <div className="gems-area">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">宝石区域</h3>
+            <GemToken gems={gameState.gems} />
+          </div>
 
-      {/* 玩家区域 */}
-      <div className="players-area">
-        {gameState.players.map((player: Player, index: number) => (
-          <PlayerPanel
-            key={player.id}
-            player={player}
-            isActive={index === gameState.currentPlayer}
-          />
-        ))}
+          <div className="players-area mt-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">玩家信息</h3>
+            <div className="flex flex-col gap-2">
+              {gameState.players.map((player: Player, index: number) => (
+                <PlayerPanel
+                  key={player.id}
+                  player={player}
+                  isActive={index === gameState.currentPlayer}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
