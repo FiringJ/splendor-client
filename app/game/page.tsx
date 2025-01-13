@@ -13,7 +13,7 @@ export default function GamePage() {
   }, [initGame]);
 
   return (
-    <main className="min-h-screen bg-green-50 p-4">
+    <main>
       <GameBoard />
     </main>
   );

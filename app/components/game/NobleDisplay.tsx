@@ -18,8 +18,8 @@ export const NobleDisplay = ({ nobles }: NobleDisplayProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayer];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-4 flex-wrap">
+    <div className="flex flex-col">
+      <div className="flex gap-1 justify-between">
         {nobles.map((noble) => {
           const canAcquire = GameValidator.canAcquireNoble(noble, currentPlayer);
 
@@ -27,8 +27,9 @@ export const NobleDisplay = ({ nobles }: NobleDisplayProps) => {
             <div
               key={noble.id}
               className={`
+                transform origin-left
                 transition-transform duration-200
-                ${canAcquire ? 'hover:scale-105 cursor-pointer' : ''}
+                ${canAcquire ? 'hover:scale-95 cursor-pointer' : ''}
                 ${canAcquire ? 'ring-2 ring-yellow-400' : ''}
               `}
               title={canAcquire ? '可以获得此贵族' : undefined}

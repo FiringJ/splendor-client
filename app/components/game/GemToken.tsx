@@ -154,26 +154,27 @@ export const GemToken = ({ gems }: GemTokenProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-4">
+    <div className="flex flex-col gap-4 w-full">
+      <div className="grid grid-cols-6 gap-2">
         {Object.entries(gems).map(([gem, count]) => (
           <div
             key={gem}
-            className="flex flex-col items-center gap-2"
+            className="flex flex-col items-center"
             onClick={() => handleGemClick(gem as GemType)}
             onDoubleClick={() => handleDoubleClick(gem as GemType)}
           >
             <div className={`
-              w-12 h-12 rounded-full cursor-pointer
+              aspect-square w-full rounded-full cursor-pointer
               ${gemColors[gem as GemType]}
               flex items-center justify-center
               ${selectedGems[gem as GemType] ? 'ring-2 ring-yellow-400' : ''}
               hover:opacity-80 transition-opacity
+              text-sm
             `}>
               {count}
             </div>
             {selectedGems[gem as GemType] && (
-              <div className="text-sm font-bold">
+              <div className="text-xs font-bold text-center whitespace-nowrap mt-1">
                 已选: {selectedGems[gem as GemType]}
               </div>
             )}

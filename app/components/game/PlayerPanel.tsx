@@ -21,11 +21,11 @@ const gemColors: Record<GemType, string> = {
 export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
   return (
     <div className={`
-      p-4 rounded-lg shadow-md
+      p-3 rounded-lg shadow-sm
       ${isActive ? 'bg-yellow-50 ring-2 ring-yellow-400' : 'bg-white'}
     `}>
       {/* 玩家信息头部 */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
           <span className="font-bold">{player.name}</span>
           {isActive && <span className="text-sm text-yellow-600">(当前回合)</span>}
@@ -36,13 +36,13 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
       </div>
 
       {/* 宝石区域 */}
-      <div className="mb-4">
-        <h3 className="text-sm font-bold mb-2">宝石:</h3>
+      <div className="mb-3">
+        <h3 className="text-sm font-bold mb-1">宝石:</h3>
         <div className="flex gap-2">
           {Object.entries(player.gems).map(([gem, count]) => count > 0 && (
             <div key={gem} className="flex items-center gap-1">
               <div className={`w-6 h-6 rounded-full ${gemColors[gem as GemType]} 
-                            flex items-center justify-center text-sm`}>
+                            flex items-center justify-center text-sm font-bold shadow-sm`}>
                 {count}
               </div>
             </div>
@@ -51,8 +51,8 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
       </div>
 
       {/* 发展卡区域 */}
-      <div className="mb-4">
-        <h3 className="text-sm font-bold mb-2">发展卡:</h3>
+      <div className="mb-3">
+        <h3 className="text-sm font-bold mb-1">发展卡:</h3>
         <div className="flex gap-2 overflow-x-auto">
           {player.cards.map((card) => (
             <div key={card.id} className="transform scale-75 origin-left">
@@ -64,8 +64,8 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
 
       {/* 预留卡区域 */}
       {player.reservedCards.length > 0 && (
-        <div className="mb-4">
-          <h3 className="text-sm font-bold mb-2">预留卡:</h3>
+        <div className="mb-3">
+          <h3 className="text-sm font-bold mb-1">预留卡:</h3>
           <div className="flex gap-2 overflow-x-auto">
             {player.reservedCards.map((card) => (
               <div key={card.id} className="transform scale-75 origin-left">
@@ -79,7 +79,7 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
       {/* 贵族区域 */}
       {player.nobles.length > 0 && (
         <div>
-          <h3 className="text-sm font-bold mb-2">贵族:</h3>
+          <h3 className="text-sm font-bold mb-1">贵族:</h3>
           <div className="flex gap-2 overflow-x-auto">
             {player.nobles.map((noble) => (
               <div key={noble.id} className="transform scale-75 origin-left">
