@@ -7,14 +7,32 @@ import { GemToken } from './GemToken';
 import { CardDisplay } from './CardDisplay';
 import { PlayerPanel } from './PlayerPanel';
 import { NobleDisplay } from './NobleDisplay';
+import { GameStatus } from './GameStatus';
+import { ActionHistory } from './ActionHistory';
+import { ConfirmDialog } from './ConfirmDialog';
 
 export const GameBoard = () => {
   const gameState = useGameStore((state: GameStore) => state.gameState);
+  const confirmDialog = useGameStore((state: GameStore) => state.confirmDialog);
 
   if (!gameState) return null;
 
   return (
     <div className="flex flex-col gap-6 p-4">
+      <GameStatus />
+      <ActionHistory />
+      {confirmDialog && (
+        <ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          onConfirm={() => {
+            confirmDialog.onConfirm();
+            useGameStore.getState().hideConfirm();
+          }}
+          onCancel={() => useGameStore.getState().hideConfirm()}
+        />
+      )}
       <div className="game-area">
         {/* 贵族区域 */}
         <div className="nobles-area">
@@ -44,4 +62,4 @@ export const GameBoard = () => {
       </div>
     </div>
   );
-}; 
+};

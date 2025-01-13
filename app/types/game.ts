@@ -1,5 +1,24 @@
 export type GemType = 'diamond' | 'sapphire' | 'emerald' | 'ruby' | 'onyx' | 'gold';
 
+export interface GameAction {
+  type: 'takeGems' | 'purchaseCard' | 'reserveCard' | 'endTurn' | 'acquireNoble';
+  playerId: string;
+  playerName: string;
+  details: {
+    gems?: Partial<Record<GemType, number>>;
+    card?: {
+      id: number;
+      points: number;
+      gem: GemType;
+    };
+    noble?: {
+      id: number;
+      points: number;
+    };
+  };
+  timestamp: number;
+}
+
 export interface Card {
   id: number;
   level: 1 | 2 | 3;

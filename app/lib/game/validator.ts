@@ -6,18 +6,23 @@ export class GameValidator {
     selectedGems: Partial<Record<GemType, number>>,
     gameState: GameState
   ): boolean {
+    // 禁止选择黄金
+    if (selectedGems.gold) return false;
+
     const totalSelected = Object.values(selectedGems).reduce((a, b) => a + (b || 0), 0);
+    const differentColors = Object.keys(selectedGems).length;
     const sameColorCount = Math.max(...Object.values(selectedGems).map(v => v || 0));
 
-    // 规则1: 最多拿3个不同颜色的宝石
-    if (totalSelected > 3) return false;
+    // 规则1: 如果选择2个同色宝石，该颜色必须有至少4个
+    if (sameColorCount === 2) {
+      const gemType = Object.entries(selectedGems).find(([, count]) => count === 2)?.[0];
+      if (gemType && gameState.gems[gemType as GemType] < 4) return false;
+      return differentColors === 1; // 只允许选择一种颜色
+    }
 
-    // 规则2: 如果拿2个同色宝石，不能拿其他颜色
-    if (sameColorCount === 2 && totalSelected > 2) return false;
-
-    // 规则3: 同色宝石必须有足够数量
-    for (const [gem, count] of Object.entries(selectedGems)) {
-      if ((gameState.gems[gem as GemType] || 0) < (count || 0)) return false;
+    // 规则2: 如果选择不同颜色，最多3个
+    if (sameColorCount === 1) {
+      return totalSelected <= 3;
     }
 
     return true;

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { GameState, Card, GemType } from '../types/game';
+import { GameState, Card, GemType, GameAction } from '../types/game';
 import { GameActions } from '../lib/game/actions';
 import { generateInitialCards, generateInitialNobles } from '../lib/game/generator';
 
@@ -12,10 +12,37 @@ export interface GameStore {
   endTurn: () => void;
   checkGameEnd: () => boolean;
   checkWinner: (state: GameState) => string;
+  confirmDialog: {
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null;
+  showConfirm: (title: string, message: string, onConfirm: () => void) => void;
+  hideConfirm: () => void;
+  actionHistory: GameAction[];
+  addAction: (action: Omit<GameAction, 'timestamp'>) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: null,
+  confirmDialog: null,
+  actionHistory: [],
+
+  showConfirm: (title, message, onConfirm) => {
+    set({
+      confirmDialog: {
+        isOpen: true,
+        title,
+        message,
+        onConfirm
+      }
+    });
+  },
+
+  hideConfirm: () => {
+    set({ confirmDialog: null });
+  },
 
   initGame: (playerCount) => {
     // 初始化游戏状态
@@ -125,5 +152,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     return winners[0].id; // 返回胜利者ID
+  },
+
+  addAction: (action) => {
+    set(state => ({
+      actionHistory: [...state.actionHistory, {
+        ...action,
+        timestamp: Date.now()
+      }]
+    }));
   }
 })); 

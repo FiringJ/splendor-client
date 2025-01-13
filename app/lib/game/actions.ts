@@ -7,7 +7,10 @@ export class GameActions {
     gameState: GameState,
     selectedGems: Partial<Record<GemType, number>>
   ): GameState {
+    console.log('GameActions.takeGems called with:', { gameState, selectedGems }); // 调试日志
+
     if (!GameValidator.canTakeGems(selectedGems, gameState)) {
+      console.log('Invalid gems selection'); // 调试日志
       throw new Error('Invalid gems selection');
     }
 
@@ -21,6 +24,7 @@ export class GameActions {
       currentPlayer.gems[gemType] = (currentPlayer.gems[gemType] || 0) + (count || 0);
     });
 
+    console.log('New state after taking gems:', newState); // 调试日志
     return this.endTurn(newState);
   }
 

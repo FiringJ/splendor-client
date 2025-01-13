@@ -18,50 +18,139 @@ const gemColors: Record<GemType, string> = {
 };
 
 export const GemToken = ({ gems }: GemTokenProps) => {
-  const { takeGems } = useGameStore();
+  const { takeGems, showConfirm, hideConfirm, addAction, gameState } = useGameStore();
   const [selectedGems, setSelectedGems] = useState<Partial<Record<GemType, number>>>({});
 
+  // 计算玩家当前拥有的宝石总数
+  const getCurrentPlayerGemCount = () => {
+    if (!gameState) return 0;
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    return Object.values(currentPlayer.gems).reduce((sum, count) => sum + count, 0);
+  };
+
   const handleGemClick = (gemType: GemType) => {
+    if (gemType === 'gold') return;
+
     const currentCount = selectedGems[gemType] || 0;
     const availableGems = gems[gemType];
+    const totalSelected = Object.values(selectedGems).reduce((a, b) => a + (b || 0), 0);
+    const currentPlayerGemCount = getCurrentPlayerGemCount();
 
-    // 如果已经选择了2个同色宝石，取消选择
-    if (currentCount === 2) {
+    // 检查是否会超过10个宝石限制
+    if (currentPlayerGemCount + totalSelected + 1 > 10) {
+      showConfirm("提示", "选择的宝石会导致总数超过10个，请重新选择", () => { });
+      return;
+    }
+
+    // 如果已经选择了这个宝石
+    if (currentCount > 0) {
+      // 如果只选择了这个宝石，且可用数量>=4，则可以选择第二个
+      if (Object.keys(selectedGems).length === 1 && availableGems >= 4) {
+        if (currentCount === 1) {
+          setSelectedGems({
+            [gemType]: 2
+          });
+          return;
+        }
+      }
+      // 其他情况下点击则取消选择
       const newSelected = { ...selectedGems };
       delete newSelected[gemType];
       setSelectedGems(newSelected);
       return;
     }
 
-    // 检查是否可以选择更多宝石
-    const totalSelected = Object.values(selectedGems).reduce((a, b) => a + (b || 0), 0);
-    const sameColorCount = Math.max(...Object.values(selectedGems).map(v => v || 0));
+    // 尝试选择第一个宝石
+    if (currentCount === 0) {
+      // 如果已经选择了3个不同颜色的宝石，不能再选
+      if (totalSelected >= 3) {
+        return;
+      }
 
-    // 如果已经选择了3个不同颜色的宝石，不能再选
-    if (totalSelected >= 3 && currentCount === 0) return;
+      // 如果剩余宝石数量大于等于4个，允许选择2个
+      if (availableGems >= 4) {
+        setSelectedGems({
+          ...selectedGems,
+          [gemType]: 1
+        });
+      } else if (availableGems > 0) {
+        // 否则只能选择1个
+        setSelectedGems({
+          ...selectedGems,
+          [gemType]: 1
+        });
+      }
+      return;
+    }
+  };
 
-    // 如果已经选择了2个同色宝石，不能选择其他颜色
-    if (sameColorCount === 2 && currentCount === 0) return;
+  // 双击处理函数，用于快速选择2个同色宝石
+  const handleDoubleClick = (gemType: GemType) => {
+    if (gemType === 'gold') return;
 
-    // 如果已经选择了其他颜色，不能选择2个同色
-    if (totalSelected > 0 && currentCount === 1) return;
+    const availableGems = gems[gemType];
+    const currentPlayerGemCount = getCurrentPlayerGemCount();
 
-    // 更新选择的宝石
-    if (availableGems > currentCount) {
-      setSelectedGems({
-        ...selectedGems,
-        [gemType]: currentCount + 1
-      });
+    // 检查是否会超过10个宝石限制
+    if (currentPlayerGemCount + 2 > 10) {
+      showConfirm("提示", "选择的宝石会导致总数超过10个，请重新选择", () => { });
+      return;
+    }
+
+    // 检查是否有足够的宝石可选
+    if (availableGems < 4) {
+      showConfirm("提示", "该颜色宝石数量少于4个，无法选择2个", () => { });
+      return;
+    }
+
+    const currentCount = selectedGems[gemType] || 0;
+
+    // 只有当没有选择其他宝石，且该颜色宝石数量>=4时，才能选择2个
+    if (Object.keys(selectedGems).length === 0 ||
+      (Object.keys(selectedGems).length === 1 && selectedGems[gemType])) {
+      if (availableGems >= 4) {
+        setSelectedGems({
+          [gemType]: currentCount === 2 ? 0 : 2
+        });
+      }
     }
   };
 
   const handleConfirm = () => {
-    if (Object.keys(selectedGems).length > 0) {
+    console.log('Selected gems:', selectedGems); // 调试日志
+
+    if (Object.keys(selectedGems).length === 0) {
+      console.log('No gems selected'); // 调试日志
+      return;
+    }
+
+    const handleTakeGems = () => {
+      console.log('Attempting to take gems...'); // 调试日志
       const success = takeGems(selectedGems);
-      if (success) {
+      console.log('Take gems result:', success); // 调试日志
+
+      if (success && gameState) {
+        const currentPlayer = gameState.players[gameState.currentPlayer];
+        addAction({
+          playerId: currentPlayer.id,
+          playerName: currentPlayer.name,
+          type: 'takeGems',
+          details: {
+            gems: selectedGems
+          }
+        });
         setSelectedGems({});
       }
-    }
+      hideConfirm();
+    };
+
+    showConfirm(
+      "确认选择宝石",
+      `确定要选择这些宝石吗？\n${Object.entries(selectedGems)
+        .map(([gem, count]) => `${gem}: ${count}`)
+        .join('\n')}`,
+      handleTakeGems
+    );
   };
 
   return (
@@ -72,6 +161,7 @@ export const GemToken = ({ gems }: GemTokenProps) => {
             key={gem}
             className="flex flex-col items-center gap-2"
             onClick={() => handleGemClick(gem as GemType)}
+            onDoubleClick={() => handleDoubleClick(gem as GemType)}
           >
             <div className={`
               w-12 h-12 rounded-full cursor-pointer
