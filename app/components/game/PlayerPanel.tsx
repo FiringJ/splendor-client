@@ -35,60 +35,108 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
         </div>
       </div>
 
-      {/* 宝石区域 */}
+      {/* 宝石资源区域 */}
       <div className="mb-3">
-        <h3 className="text-sm font-bold mb-1">宝石:</h3>
-        <div className="flex gap-2">
-          {Object.entries(player.gems).map(([gem, count]) => count > 0 && (
-            <div key={gem} className="flex items-center gap-1">
-              <div className={`w-6 h-6 rounded-full ${gemColors[gem as GemType]} 
-                            flex items-center justify-center text-sm font-bold shadow-sm`}>
-                {count}
-              </div>
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="text-sm font-bold">宝石资源</h3>
+          <span className="text-sm text-gray-500">{Object.values(player.gems).reduce((a, b) => a + b, 0)}/10</span>
+        </div>
+        <div className="flex gap-3">
+          {/* 白宝石组 */}
+          <div className="flex gap-1">
+            <div className={`w-7 h-7 rounded-full ${gemColors['diamond']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.gems['diamond'] || 0}
             </div>
-          ))}
+            <div className={`w-7 h-7 ${gemColors['diamond']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.cards.filter(card => card.gem === 'diamond').length}
+            </div>
+          </div>
+
+          {/* 蓝宝石组 */}
+          <div className="flex gap-1">
+            <div className={`w-7 h-7 rounded-full ${gemColors['sapphire']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.gems['sapphire'] || 0}
+            </div>
+            <div className={`w-7 h-7 ${gemColors['sapphire']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.cards.filter(card => card.gem === 'sapphire').length}
+            </div>
+          </div>
+
+          {/* 绿宝石组 */}
+          <div className="flex gap-1">
+            <div className={`w-7 h-7 rounded-full ${gemColors['emerald']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.gems['emerald'] || 0}
+            </div>
+            <div className={`w-7 h-7 ${gemColors['emerald']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.cards.filter(card => card.gem === 'emerald').length}
+            </div>
+          </div>
+
+          {/* 红宝石组 */}
+          <div className="flex gap-1">
+            <div className={`w-7 h-7 rounded-full ${gemColors['ruby']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.gems['ruby'] || 0}
+            </div>
+            <div className={`w-7 h-7 ${gemColors['ruby']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.cards.filter(card => card.gem === 'ruby').length}
+            </div>
+          </div>
+
+          {/* 黑宝石组 */}
+          <div className="flex gap-1">
+            <div className={`w-7 h-7 rounded-full ${gemColors['onyx']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.gems['onyx'] || 0}
+            </div>
+            <div className={`w-7 h-7 ${gemColors['onyx']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+              {player.cards.filter(card => card.gem === 'onyx').length}
+            </div>
+          </div>
+
+          {/* 黄金 */}
+          <div className={`w-7 h-7 rounded-full ${gemColors['gold']} 
+                        flex items-center justify-center text-sm font-bold shadow-sm`}>
+            {player.gems['gold'] || 0}
+          </div>
         </div>
       </div>
 
-      {/* 发展卡区域 */}
-      <div className="mb-3">
-        <h3 className="text-sm font-bold mb-1">发展卡:</h3>
-        <div className="flex gap-2 overflow-x-auto">
-          {player.cards.map((card) => (
-            <div key={card.id} className="transform scale-75 origin-left">
-              <Card card={card} disabled />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 预留卡区域 */}
-      {player.reservedCards.length > 0 && (
-        <div className="mb-3">
-          <h3 className="text-sm font-bold mb-1">预留卡:</h3>
-          <div className="flex gap-2 overflow-x-auto">
+      <div className="grid grid-cols-2 gap-2">
+        {/* 左侧：预留卡区域 */}
+        <div>
+          <h3 className="text-sm font-bold mb-1">预留卡: {player.reservedCards.length}/3</h3>
+          <div className="flex flex-col gap-2">
             {player.reservedCards.map((card) => (
-              <div key={card.id} className="transform scale-75 origin-left">
+              <div key={card.id} className="transform scale-75 origin-top-left -ml-6">
                 <Card card={card} />
               </div>
             ))}
           </div>
         </div>
-      )}
 
-      {/* 贵族区域 */}
-      {player.nobles.length > 0 && (
-        <div>
-          <h3 className="text-sm font-bold mb-1">贵族:</h3>
-          <div className="flex gap-2 overflow-x-auto">
-            {player.nobles.map((noble) => (
-              <div key={noble.id} className="transform scale-75 origin-left">
-                <Noble noble={noble} />
-              </div>
-            ))}
+        {/* 右侧：贵族区域 */}
+        {player.nobles.length > 0 && (
+          <div>
+            <h3 className="text-sm font-bold mb-1">贵族:</h3>
+            <div className="flex flex-col gap-2">
+              {player.nobles.map((noble) => (
+                <div key={noble.id} className="transform scale-75 origin-top-left -ml-6">
+                  <Noble noble={noble} />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }; 

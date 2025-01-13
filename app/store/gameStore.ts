@@ -69,7 +69,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       nobles: generateInitialNobles(playerCount + 1),
       status: 'playing',
       lastRound: false,
-      winner: null
+      winner: null,
+      actions: []
     };
     set({ gameState: initialState });
   },

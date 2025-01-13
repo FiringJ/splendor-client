@@ -31,7 +31,7 @@ export const GameBoard = () => {
         />
       )}
 
-      <div className="h-full max-w-[1600px] mx-auto px-4 py-2 grid grid-cols-[320px_minmax(600px,_1fr)_320px] gap-4">
+      <div className="h-full max-w-[1700px] mx-auto px-4 py-2 grid grid-cols-[360px_minmax(600px,_1fr)_400px] gap-4">
         {/* 左侧：贵族区域和操作历史 */}
         <div className="flex flex-col gap-4 w-full">
           <div className="w-full">
