@@ -1,8 +1,9 @@
 'use client';
 
-import { Player, GemType } from '../../types/game';
+import { Player, GemType, Card as CardType } from '../../types/game';
 import { Card } from './Card';
 import { Noble } from './Noble';
+import { useGameStore } from '../../store/gameStore';
 
 interface PlayerPanelProps {
   player: Player;
@@ -19,6 +20,26 @@ const gemColors: Record<GemType, string> = {
 };
 
 export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
+  const { purchaseCard, addAction } = useGameStore();
+
+  const handlePurchaseReservedCard = (card: CardType) => {
+    const success = purchaseCard(card);
+
+    if (success) {
+      addAction({
+        playerId: player.id,
+        playerName: player.name,
+        type: 'purchaseCard',
+        details: {
+          card: {
+            gem: card.gem,
+            points: card.points
+          }
+        }
+      });
+    }
+  };
+
   return (
     <div className={`
       p-3 rounded-lg shadow-sm
@@ -46,11 +67,11 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
           {(['diamond', 'sapphire', 'emerald', 'ruby', 'onyx'] as const).map((gemType) => (
             <div key={gemType} className="flex gap-1">
               <div className={`w-6 h-6 ${gemColors[gemType]} 
-                            flex items-center justify-center text-sm font-bold shadow-sm`}>
+                            flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
                 {player.cards.filter(card => card.gem === gemType).length}
               </div>
               <div className={`w-6 h-6 rounded-full ${gemColors[gemType]} 
-                            flex items-center justify-center text-sm font-bold shadow-sm`}>
+                            flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
                 {player.gems[gemType] || 0}
               </div>
             </div>
@@ -59,7 +80,7 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
           {/* 黄金组 */}
           <div className="flex">
             <div className={`w-6 h-6 rounded-full ${gemColors['gold']} 
-                          flex items-center justify-center text-sm font-bold shadow-sm`}>
+                          flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
               {player.gems['gold'] || 0}
             </div>
           </div>
@@ -72,8 +93,24 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
           <h3 className="text-sm font-bold mb-2">预留卡: {player.reservedCards.length}/3</h3>
           <div className="flex flex-col gap-2">
             {player.reservedCards.map((card) => (
-              <div key={card.id} className="transform scale-75 origin-top-left">
-                <Card card={card} />
+              <div key={card.id} className="transform scale-75 origin-top-left relative">
+                <Card
+                  card={card}
+                  disabled={!isActive}
+                />
+                {isActive && (
+                  <button
+                    onClick={() => handlePurchaseReservedCard(card)}
+                    className="absolute -bottom-4 left-1/2 -translate-x-1/2 
+                              px-4 py-1 bg-blue-500 text-white text-sm rounded-lg
+                              shadow-md shadow-blue-500/30
+                              hover:bg-blue-600 hover:shadow-blue-600/30
+                              active:transform active:scale-95
+                              transition-all duration-200"
+                  >
+                    购买
+                  </button>
+                )}
               </div>
             ))}
           </div>

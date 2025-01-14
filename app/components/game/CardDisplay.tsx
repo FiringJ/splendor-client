@@ -3,6 +3,7 @@
 import { Card as CardType } from '../../types/game';
 import { Card } from './Card';
 import { useGameStore } from '../../store/gameStore';
+import { useState } from 'react';
 
 interface CardDisplayProps {
   cards: {
@@ -14,11 +15,25 @@ interface CardDisplayProps {
 
 export const CardDisplay = ({ cards }: CardDisplayProps) => {
   const { purchaseCard, reserveCard } = useGameStore();
+  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+
+  const handleCardClick = (card: CardType) => {
+    if (selectedCard?.id === card.id) {
+      setSelectedCard(null);
+    } else {
+      setSelectedCard(card);
+    }
+  };
+
+  // 点击背景时取消选中
+  const handleBackgroundClick = () => {
+    setSelectedCard(null);
+  };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" onClick={handleBackgroundClick}>
       {/* 三级卡牌 */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
         {/* 三级卡牌剩余数量 */}
         <div className="w-16 h-44 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 
                     border-2 border-blue-300 flex flex-col items-center justify-center">
@@ -29,14 +44,22 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
           <Card
             key={card.id}
             card={card}
-            onPurchase={() => purchaseCard(card)}
-            onReserve={() => reserveCard(card)}
+            onPurchase={() => {
+              purchaseCard(card);
+              setSelectedCard(null);
+            }}
+            onReserve={() => {
+              reserveCard(card);
+              setSelectedCard(null);
+            }}
+            onClick={() => handleCardClick(card)}
+            isSelected={selectedCard?.id === card.id}
           />
         ))}
       </div>
 
       {/* 二级卡牌 */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
         {/* 二级卡牌剩余数量 */}
         <div className="w-16 h-44 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-200 
                     border-2 border-yellow-300 flex flex-col items-center justify-center">
@@ -47,14 +70,22 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
           <Card
             key={card.id}
             card={card}
-            onPurchase={() => purchaseCard(card)}
-            onReserve={() => reserveCard(card)}
+            onPurchase={() => {
+              purchaseCard(card);
+              setSelectedCard(null);
+            }}
+            onReserve={() => {
+              reserveCard(card);
+              setSelectedCard(null);
+            }}
+            onClick={() => handleCardClick(card)}
+            isSelected={selectedCard?.id === card.id}
           />
         ))}
       </div>
 
       {/* 一级卡牌 */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
         {/* 一级卡牌剩余数量 */}
         <div className="w-16 h-44 rounded-xl bg-gradient-to-br from-green-100 to-green-200 
                     border-2 border-green-300 flex flex-col items-center justify-center">
@@ -65,11 +96,27 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
           <Card
             key={card.id}
             card={card}
-            onPurchase={() => purchaseCard(card)}
-            onReserve={() => reserveCard(card)}
+            onPurchase={() => {
+              purchaseCard(card);
+              setSelectedCard(null);
+            }}
+            onReserve={() => {
+              reserveCard(card);
+              setSelectedCard(null);
+            }}
+            onClick={() => handleCardClick(card)}
+            isSelected={selectedCard?.id === card.id}
           />
         ))}
       </div>
+
+      {/* 遮罩层 - 当有卡片被选中时显示 */}
+      {selectedCard && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={handleBackgroundClick}
+        />
+      )}
     </div>
   );
 }; 

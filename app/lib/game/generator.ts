@@ -14,18 +14,23 @@ export function generateInitialCards() {
     return newArray;
   };
 
+  // 先打乱所有卡组
+  const shuffled1 = shuffleArray([...level1Cards]);
+  const shuffled2 = shuffleArray([...level2Cards]);
+  const shuffled3 = shuffleArray([...level3Cards]);
+
   return {
-    level1: shuffleArray(level1Cards).slice(0, 4),
-    level2: shuffleArray(level2Cards).slice(0, 4),
-    level3: shuffleArray(level3Cards).slice(0, 4),
-    deck1: shuffleArray(level1Cards.slice(4)),
-    deck2: shuffleArray(level2Cards.slice(4)),
-    deck3: shuffleArray(level3Cards.slice(4))
+    level1: shuffled1.slice(0, 4),
+    level2: shuffled2.slice(0, 4),
+    level3: shuffled3.slice(0, 4),
+    deck1: shuffled1.slice(4),
+    deck2: shuffled2.slice(4),
+    deck3: shuffled3.slice(4)
   };
 }
 
 export function generateInitialNobles(count: number): Noble[] {
-  return shuffleArray(nobles).slice(0, count);
+  return shuffleArray([...nobles]).slice(0, count);
 }
 
 function shuffleArray<T>(array: T[]): T[] {

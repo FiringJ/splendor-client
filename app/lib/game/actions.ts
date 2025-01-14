@@ -66,8 +66,15 @@ export class GameActions {
     player.cards.push(card);
     player.points += card.points;
 
-    // 从展示区移除卡牌并补充
-    this.removeAndReplenishCard(newState, card);
+    // 检查是否是从预留卡中购买
+    const reservedCardIndex = player.reservedCards.findIndex(c => c.id === card.id);
+    if (reservedCardIndex !== -1) {
+      // 如果是预留卡，从预留区移除
+      player.reservedCards.splice(reservedCardIndex, 1);
+    } else {
+      // 如果不是预留卡，从展示区移除并补充
+      this.removeAndReplenishCard(newState, card);
+    }
 
     // 检查是否可以获得贵族
     this.checkNobles(newState);

@@ -88,7 +88,7 @@ export const ActionHistory = () => {
   return (
     <div className="bg-white rounded-lg shadow-lg">
       <div className="p-2 space-y-1">
-        {actionHistory.map((action, index) => (
+        {[...actionHistory].reverse().map((action, index) => (
           <div key={index} className="text-sm text-gray-600 border-b last:border-b-0">
             {formatAction(action)}
           </div>
