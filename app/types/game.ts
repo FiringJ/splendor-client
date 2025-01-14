@@ -25,6 +25,10 @@ export interface Card {
   gem: GemType;
   cost: Partial<Record<GemType, number>>;
   image?: string;
+  spritePosition: {
+    x: number;  // 精灵图中的x坐标（第几列，从0开始）
+    y: number;  // 精灵图中的y坐标（第几行，从0开始）
+  };
 }
 
 export interface Noble {

@@ -7,6 +7,7 @@ interface CardProps {
   onPurchase?: () => void;
   onReserve?: () => void;
   disabled?: boolean;
+  isCardBack?: boolean;
 }
 
 const cardColors: Record<GemType, string> = {
@@ -27,7 +28,7 @@ const gemColors: Record<GemType, string> = {
   gold: 'text-black bg-yellow-400'
 };
 
-export const Card = ({ card, onPurchase, onReserve, disabled }: CardProps) => {
+export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false }: CardProps) => {
   return (
     <div className={`
       relative w-32 h-44 rounded-xl
@@ -37,10 +38,18 @@ export const Card = ({ card, onPurchase, onReserve, disabled }: CardProps) => {
       transition-all duration-300 ease-in-out
       overflow-hidden backdrop-blur-sm
     `}>
-      {/* 卡牌背景装饰 */}
-      <div className="absolute inset-0 bg-opacity-10">
-        <div className="w-full h-full bg-[url('/images/card-pattern.png')] bg-repeat opacity-20" />
-      </div>
+      {/* 卡牌图案 */}
+      <div
+        className="absolute inset-0 bg-[url('/images/cards.webp')] bg-no-repeat"
+        style={{
+          backgroundSize: '500% 600%',
+          backgroundPosition: isCardBack ?
+            // 卡片背面：最后一行，根据等级选择位置
+            `${(card.level - 1) * 25}% 100%` :
+            // 卡片正面：根据宝石类型和图案位置
+            `${card.spritePosition.x * 25}% ${getBackgroundY(card) * 20}%`
+        }}
+      />
 
       {/* 卡牌点数 - 只在大于0时显示 */}
       {card.points > 0 && (
@@ -53,18 +62,6 @@ export const Card = ({ card, onPurchase, onReserve, disabled }: CardProps) => {
           </span>
         </div>
       )}
-
-      {/* 产出宝石 */}
-      <div className={`
-        absolute top-10 left-1/2 transform -translate-x-1/2
-        w-12 h-12 rounded-full
-        ${gemColors[card.gem]} 
-        shadow-xl border-2 border-white
-        flex items-center justify-center
-        hover:scale-105 transition-transform duration-200
-      `}>
-        <span className="text-2xl transform hover:rotate-12 transition-transform">{getGemEmoji(card.gem)}</span>
-      </div>
 
       {/* 费用区域 */}
       <div className="absolute bottom-8 left-1 right-1 
@@ -111,15 +108,16 @@ export const Card = ({ card, onPurchase, onReserve, disabled }: CardProps) => {
   );
 };
 
-// 辅助函数：获取宝石对应的emoji
-const getGemEmoji = (gem: GemType): string => {
-  const emojiMap: Record<GemType, string> = {
-    diamond: '💎',
-    sapphire: '🔷',
-    emerald: '💚',
-    ruby: '❤️',
-    onyx: '⚫',
-    gold: '⭐'
+// 辅助函数：获取卡片背景的y坐标
+const getBackgroundY = (card: CardType): number => {
+  // 根据宝石类型确定y坐标
+  const gemPositions: Record<GemType, number> = {
+    sapphire: 0,  // 蓝色卡牌
+    onyx: 1,      // 黑色卡牌
+    ruby: 2,      // 红色卡牌
+    emerald: 3,   // 绿色卡牌
+    diamond: 4,   // 白色卡牌
+    gold: 0       // 金色（预留）
   };
-  return emojiMap[gem];
+  return gemPositions[card.gem];
 }; 
