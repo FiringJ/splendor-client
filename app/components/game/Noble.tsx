@@ -15,22 +15,35 @@ const gemColors: Record<GemType, string> = {
   gold: 'text-black bg-yellow-400'
 };
 
+// 计算贵族精灵图位置
+const getNoblePosition = (id: number) => {
+  // id从1开始，减1后得到在精灵图中的索引
+  const index = id - 1;
+  // 每行5个，计算行和列
+  const row = Math.floor(index / 5);
+  const col = index % 5;
+  return { x: col * 25, y: row * 100 };
+};
+
 export const Noble = ({ noble }: NobleProps) => {
+  const position = getNoblePosition(noble.id);
+
   return (
     <div className="w-24 h-32 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 
                     shadow-lg hover:shadow-xl transition-all duration-300 
-                    border-2 border-purple-300 p-2 
+                    border-2 border-purple-300
                     flex flex-col items-center justify-between
                     relative overflow-hidden">
-      {/* 装饰背景 */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10">
-        <div className="w-full h-full bg-[url('/images/noble-pattern.png')] bg-repeat" />
-      </div>
-
-      {/* 头像区域 */}
-      <div className="w-12 h-12 rounded-full bg-purple-300 border-2 border-purple-400
-                    flex items-center justify-center overflow-hidden">
-        <div className="text-xl">👑</div>
+      {/* 贵族头像 - 调整高度和缩放 */}
+      <div className="w-full h-24 relative">
+        <div
+          className="absolute inset-0 bg-[url('/images/nobles.jpg')] bg-no-repeat"
+          style={{
+            backgroundSize: '500% 200%',
+            backgroundPosition: `${position.x}% ${position.y}%`,
+            transform: 'scale(1.1)' // 放大图片
+          }}
+        />
       </div>
 
       {/* 点数 */}
@@ -41,13 +54,13 @@ export const Noble = ({ noble }: NobleProps) => {
         {noble.points}
       </div>
 
-      {/* 要求 */}
-      <div className="w-full bg-white bg-opacity-50 rounded-lg p-1">
-        <div className="grid grid-cols-2 gap-1">
+      {/* 要求 - 修改为单行布局 */}
+      <div className="w-full bg-white bg-opacity-50 p-1 mt-auto">
+        <div className="flex justify-center gap-1">
           {Object.entries(noble.requirements).map(([gem, count]) => (
             <div key={gem}
-              className="flex items-center gap-1 bg-white bg-opacity-60 
-                          rounded-sm px-1">
+              className="flex items-center gap-0.5 bg-white bg-opacity-60 
+                        rounded-sm px-1">
               <div className={`w-3 h-3 rounded-full ${gemColors[gem as GemType]} 
                             shadow-sm transform hover:scale-110 transition-transform`} />
               <span className="text-xs font-medium">{count}</span>
