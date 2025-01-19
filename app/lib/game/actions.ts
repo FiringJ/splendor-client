@@ -1,7 +1,57 @@
-import { GameState, Card, GemType } from '../../types/game';
+import { GameState, Card, GemType, Player } from '../../types/game';
 import { GameValidator } from './validator';
 
 export class GameActions {
+  // 计算卡片提供的永久宝石加成
+  private static calculateCardBonuses(cards: Card[]): Partial<Record<GemType, number>> {
+    return cards.reduce((acc, card) => {
+      acc[card.gem] = (acc[card.gem] || 0) + 1;
+      return acc;
+    }, {} as Partial<Record<GemType, number>>);
+  }
+
+  // 处理支付费用
+  private static handlePayment(
+    newState: GameState,
+    card: Card,
+    cardBonuses: Partial<Record<GemType, number>>,
+    player: Player
+  ) {
+    // 处理每种需要的宝石
+    Object.entries(card.cost).forEach(([gem, cost]) => {
+      if (!cost) return; // 跳过不需要的宝石
+
+      const gemType = gem as GemType;
+      const playerGems = player.gems[gemType] || 0;
+      const bonus = cardBonuses[gemType] || 0;
+      const actualCost = Math.max(0, cost - bonus); // 实际需要支付的数量（考虑永久宝石）
+
+      if (playerGems >= actualCost) {
+        // 如果玩家有足够的宝石，直接支付
+        player.gems[gemType] = playerGems - actualCost;
+        newState.gems[gemType] = (newState.gems[gemType] || 0) + actualCost;
+      } else {
+        // 需要使用黄金补足差额
+        const remaining = actualCost - playerGems;
+        const availableGold = player.gems.gold || 0;
+
+        if (availableGold < remaining) {
+          throw new Error('Not enough gold tokens');
+        }
+
+        // 先用完所有该类型的宝石
+        if (playerGems > 0) {
+          player.gems[gemType] = 0;
+          newState.gems[gemType] = (newState.gems[gemType] || 0) + playerGems;
+        }
+
+        // 然后使用黄金补足
+        player.gems.gold = availableGold - remaining;
+        newState.gems.gold = (newState.gems.gold || 0) + remaining;
+      }
+    });
+  }
+
   // 处理拿取宝石动作
   static takeGems(
     gameState: GameState,
@@ -39,28 +89,11 @@ export class GameActions {
     const newState = { ...gameState };
     const player = newState.players[newState.currentPlayer];
 
+    // 计算卡片提供的永久宝石加成
+    const cardBonuses = this.calculateCardBonuses(player.cards);
+
     // 支付费用
-    Object.entries(card.cost).forEach(([gem, cost]) => {
-      const gemType = gem as GemType;
-      const playerGems = player.gems[gemType] || 0;
-
-      if (playerGems >= cost) {
-        player.gems[gemType] = playerGems - cost;
-        newState.gems[gemType] = (newState.gems[gemType] || 0) + cost;
-      } else {
-        // 使用黄金补足差额
-        const remaining = cost - playerGems;
-        const availableGold = player.gems.gold || 0;
-
-        if (availableGold < remaining) {
-          throw new Error('Not enough gold tokens');
-        }
-
-        player.gems[gemType] = 0;
-        player.gems.gold = availableGold - remaining;
-        newState.gems.gold = (newState.gems.gold || 0) + remaining;
-      }
-    });
+    this.handlePayment(newState, card, cardBonuses, player);
 
     // 添加卡牌到玩家手中
     player.cards.push(card);

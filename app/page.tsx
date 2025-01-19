@@ -1,25 +1,15 @@
-import Link from 'next/link';
+'use client';
+
+import { useGameStore } from './store/gameStore';
+import { GameBoard } from './components/game/GameBoard';
+import { GameSetup } from './components/game/GameSetup';
 
 export default function Home() {
+  const gameState = useGameStore(state => state.gameState);
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-green-50 p-4">
-      <h1 className="text-4xl font-bold mb-8">璀璨宝石 Splendor</h1>
-
-      <div className="space-y-4">
-        <Link
-          href="/game"
-          className="block px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          开始游戏
-        </Link>
-
-        <Link
-          href="/rules"
-          className="block px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          游戏规则
-        </Link>
-      </div>
+    <main className="min-h-screen bg-green-50">
+      {gameState ? <GameBoard /> : <GameSetup />}
     </main>
   );
 }

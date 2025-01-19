@@ -14,7 +14,8 @@ interface CardDisplayProps {
 }
 
 export const CardDisplay = ({ cards }: CardDisplayProps) => {
-  const { purchaseCard, reserveCard } = useGameStore();
+  const gameState = useGameStore(state => state.gameState);
+  const performAction = useGameStore(state => state.performAction);
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
   const handleCardClick = (card: CardType) => {
@@ -27,6 +28,45 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
 
   // 点击背景时取消选中
   const handleBackgroundClick = () => {
+    setSelectedCard(null);
+  };
+
+  const handlePurchaseCard = (card: CardType) => {
+    if (!gameState) return;
+
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    performAction({
+      type: 'purchaseCard',
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.name,
+      details: {
+        card: {
+          gem: card.gem,
+          points: card.points
+        }
+      },
+      timestamp: Date.now()
+    });
+    setSelectedCard(null);
+  };
+
+  const handleReserveCard = (card: CardType) => {
+    if (!gameState) return;
+
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    performAction({
+      type: 'reserveCard',
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.name,
+      details: {
+        card: {
+          gem: card.gem,
+          points: card.points
+        },
+        gems: gameState.gems.gold > 0 ? { gold: 1 } : undefined
+      },
+      timestamp: Date.now()
+    });
     setSelectedCard(null);
   };
 
@@ -44,14 +84,8 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
           <Card
             key={card.id}
             card={card}
-            onPurchase={() => {
-              purchaseCard(card);
-              setSelectedCard(null);
-            }}
-            onReserve={() => {
-              reserveCard(card);
-              setSelectedCard(null);
-            }}
+            onPurchase={() => handlePurchaseCard(card)}
+            onReserve={() => handleReserveCard(card)}
             onClick={() => handleCardClick(card)}
             isSelected={selectedCard?.id === card.id}
           />
@@ -70,14 +104,8 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
           <Card
             key={card.id}
             card={card}
-            onPurchase={() => {
-              purchaseCard(card);
-              setSelectedCard(null);
-            }}
-            onReserve={() => {
-              reserveCard(card);
-              setSelectedCard(null);
-            }}
+            onPurchase={() => handlePurchaseCard(card)}
+            onReserve={() => handleReserveCard(card)}
             onClick={() => handleCardClick(card)}
             isSelected={selectedCard?.id === card.id}
           />
@@ -96,14 +124,8 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
           <Card
             key={card.id}
             card={card}
-            onPurchase={() => {
-              purchaseCard(card);
-              setSelectedCard(null);
-            }}
-            onReserve={() => {
-              reserveCard(card);
-              setSelectedCard(null);
-            }}
+            onPurchase={() => handlePurchaseCard(card)}
+            onReserve={() => handleReserveCard(card)}
             onClick={() => handleCardClick(card)}
             isSelected={selectedCard?.id === card.id}
           />

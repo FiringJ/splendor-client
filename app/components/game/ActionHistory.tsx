@@ -1,5 +1,4 @@
 import { useGameStore } from '../../store/gameStore';
-import type { GameStore } from '../../store/gameStore';
 import type { GameAction, GemType } from '../../types/game';
 
 const gemColors: Record<GemType, string> = {
@@ -32,7 +31,9 @@ const CardSquare = ({ type, points }: { type: GemType; points?: number }) => (
 );
 
 export const ActionHistory = () => {
-  const actionHistory = useGameStore((state: GameStore) => state.actionHistory);
+  const gameState = useGameStore(state => state.gameState);
+
+  if (!gameState) return null;
 
   const formatAction = (action: GameAction) => {
     switch (action.type) {
@@ -88,12 +89,12 @@ export const ActionHistory = () => {
   return (
     <div className="bg-white rounded-lg shadow-lg">
       <div className="p-2 space-y-1">
-        {[...actionHistory].reverse().map((action, index) => (
+        {[...gameState.actions].reverse().map((action, index) => (
           <div key={index} className="text-sm text-gray-600 border-b last:border-b-0">
             {formatAction(action)}
           </div>
         ))}
-        {actionHistory.length === 0 && (
+        {gameState.actions.length === 0 && (
           <div className="text-sm text-gray-400 text-center py-2">
             暂无操作记录
           </div>

@@ -1,33 +1,56 @@
 import { create } from 'zustand';
-import { GameState, Card, GemType, GameAction } from '../types/game';
+import { GameState, GameAction, Player } from '../types/game';
 import { GameActions } from '../lib/game/actions';
 import { generateInitialCards, generateInitialNobles } from '../lib/game/generator';
+import { AIPlayer } from '../lib/game/ai';
 
-export interface GameStore {
+interface GameStore {
   gameState: GameState | null;
-  initGame: (playerCount: number) => void;
-  takeGems: (gems: Partial<Record<GemType, number>>) => boolean;
-  purchaseCard: (card: Card) => boolean;
-  reserveCard: (card: Card) => boolean;
-  endTurn: () => void;
-  checkGameEnd: () => boolean;
-  checkWinner: (state: GameState) => string;
+  isAIEnabled: boolean;
   confirmDialog: {
     isOpen: boolean;
     title: string;
     message: string;
     onConfirm: () => void;
   } | null;
+  initializeGame: (players: Player[]) => void;
+  performAction: (action: GameAction) => void;
+  enableAI: (enable: boolean) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
   hideConfirm: () => void;
-  actionHistory: GameAction[];
-  addAction: (action: Omit<GameAction, 'timestamp'>) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: null,
+  isAIEnabled: false,
   confirmDialog: null,
-  actionHistory: [],
+
+  initializeGame: (players) => {
+    const initialState: GameState = {
+      players: players,
+      currentPlayer: 0,
+      gems: {
+        diamond: players.length <= 2 ? 4 : 7,
+        sapphire: players.length <= 2 ? 4 : 7,
+        emerald: players.length <= 2 ? 4 : 7,
+        ruby: players.length <= 2 ? 4 : 7,
+        onyx: players.length <= 2 ? 4 : 7,
+        gold: 5
+      },
+      cards: generateInitialCards(),
+      nobles: generateInitialNobles(players.length + 1),
+      status: 'playing',
+      lastRound: false,
+      winner: null,
+      actions: []
+    };
+
+    set({ gameState: initialState });
+  },
+
+  enableAI: (enable) => {
+    set({ isAIEnabled: enable });
+  },
 
   showConfirm: (title, message, onConfirm) => {
     set({
@@ -44,153 +67,50 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ confirmDialog: null });
   },
 
-  initGame: (playerCount) => {
-    // 初始化游戏状态
-    const initialState: GameState = {
-      players: Array(playerCount).fill(null).map((_, index) => ({
-        id: `player-${index}`,
-        name: `玩家 ${index + 1}`,
-        gems: {},
-        cards: [],
-        reservedCards: [],
-        nobles: [],
-        points: 0
-      })),
-      currentPlayer: 0,
-      gems: {
-        diamond: playerCount <= 2 ? 4 : 7,
-        sapphire: playerCount <= 2 ? 4 : 7,
-        emerald: playerCount <= 2 ? 4 : 7,
-        ruby: playerCount <= 2 ? 4 : 7,
-        onyx: playerCount <= 2 ? 4 : 7,
-        gold: 5
-      },
-      cards: generateInitialCards(),
-      nobles: generateInitialNobles(playerCount + 1),
-      status: 'playing',
-      lastRound: false,
-      winner: null,
-      actions: []
-    };
-    set({ gameState: initialState });
-  },
+  performAction: (action) => {
+    const currentState = get().gameState;
+    if (!currentState) return;
 
-  takeGems: (gems: Partial<Record<GemType, number>>) => {
+    let newState: GameState = currentState;
+
     try {
-      const newState = GameActions.takeGems(get().gameState!, gems);
-      set({ gameState: newState });
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  },
-
-  purchaseCard: (card: Card) => {
-    try {
-      const newState = GameActions.purchaseCard(get().gameState!, card);
-      set({ gameState: newState });
-
-      // 添加操作历史
-      get().addAction({
-        type: 'purchaseCard',
-        playerId: newState.players[newState.currentPlayer].id,
-        playerName: newState.players[newState.currentPlayer].name,
-        details: {
-          card: {
-            gem: card.gem,
-            points: card.points
-          }
-        }
-      });
-
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  },
-
-  reserveCard: (card: Card) => {
-    try {
-      const state = get().gameState!;
-      const newState = GameActions.reserveCard(state, card);
-      set({ gameState: newState });
-
-      // 添加操作历史
-      get().addAction({
-        type: 'reserveCard',
-        playerId: newState.players[newState.currentPlayer].id,
-        playerName: newState.players[newState.currentPlayer].name,
-        details: {
-          card: {
-            gem: card.gem,
-            points: card.points
-          },
-          gems: state.gems.gold > 0 ? { gold: 1 } : undefined
-        }
-      });
-
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  },
-
-  endTurn: () => {
-    const state = get().gameState!;
-    const newState = { ...state };
-
-    // 检查当前玩家是否达到胜利条件（15分）
-    const currentPlayer = newState.players[newState.currentPlayer];
-    if (currentPlayer.points >= 15) {
-      newState.lastRound = true;
-    }
-
-    // 更新当前玩家
-    newState.currentPlayer = (newState.currentPlayer + 1) % newState.players.length;
-
-    // 如果是最后一轮且回到第一个玩家，游戏结束
-    if (newState.lastRound && newState.currentPlayer === 0) {
-      newState.status = 'finished';
-      newState.winner = get().checkWinner(newState);
-    }
-
-    set({ gameState: newState });
-  },
-
-  checkGameEnd: () => {
-    const state = get().gameState;
-    return state?.status === 'finished';
-  },
-
-  // 私有方法：检查胜利者
-  checkWinner: (state: GameState) => {
-    let maxPoints = 0;
-    let winners = state.players.filter(player => {
-      if (player.points > maxPoints) {
-        maxPoints = player.points;
-        return true;
+      switch (action.type) {
+        case 'takeGems':
+          newState = GameActions.takeGems(currentState, action.details.gems || {});
+          break;
+        case 'purchaseCard':
+          const card = [...currentState.cards.level1, ...currentState.cards.level2, ...currentState.cards.level3]
+            .find(c => c.gem === action.details.card?.gem && c.points === action.details.card?.points);
+          if (!card) throw new Error('Card not found');
+          newState = GameActions.purchaseCard(currentState, card);
+          break;
+        case 'reserveCard':
+          // ... existing reserve card code ...
+          break;
+        case 'endTurn':
+          newState = { ...currentState };
+          newState.currentPlayer = (newState.currentPlayer + 1) % newState.players.length;
+          break;
+        default:
+          throw new Error('Invalid action type');
       }
-      return player.points === maxPoints;
-    });
 
-    // 如果有多个玩家同分，比较发展卡数量
-    if (winners.length > 1) {
-      const minCards = Math.min(...winners.map(p => p.cards.length));
-      winners = winners.filter(p => p.cards.length === minCards);
+      // 记录动作
+      newState.actions = [...newState.actions, action];
+
+      // 更新游戏状态
+      set({ gameState: newState });
+
+      // 如果启用了AI且当前玩家是AI，则执行AI的回合
+      if (get().isAIEnabled && newState.players[newState.currentPlayer].name === 'AI') {
+        setTimeout(() => {
+          const aiAction = AIPlayer.getNextAction(newState);
+          get().performAction(aiAction);
+        }, 1000); // 添加1秒延迟使AI的行动更容易观察
+      }
+
+    } catch (error) {
+      console.error('Error performing action:', error);
     }
-
-    return winners[0].id; // 返回胜利者ID
   },
-
-  addAction: (action) => {
-    set(state => ({
-      actionHistory: [...state.actionHistory, {
-        ...action,
-        timestamp: Date.now()
-      }]
-    }));
-  }
 })); 

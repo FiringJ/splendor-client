@@ -21,7 +21,8 @@ const gemColors: Record<GemType, string> = {
 const debouncedFn = debounce((fn: () => void) => fn(), 200);
 
 export const GemToken = ({ gems }: GemTokenProps) => {
-  const { takeGems, addAction, gameState } = useGameStore();
+  const gameState = useGameStore(state => state.gameState);
+  const performAction = useGameStore(state => state.performAction);
   const [selectedGems, setSelectedGems] = useState<Partial<Record<GemType, number>>>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -29,7 +30,7 @@ export const GemToken = ({ gems }: GemTokenProps) => {
   const getCurrentPlayerGemCount = useCallback(() => {
     if (!gameState) return 0;
     const currentPlayer = gameState.players[gameState.currentPlayer];
-    return Object.values(currentPlayer.gems).reduce((sum, count) => sum + count, 0);
+    return Object.values(currentPlayer.gems).reduce((sum, count) => sum + (count || 0), 0);
   }, [gameState]);
 
   // 使用useCallback和debounce来处理宝石点击
@@ -131,24 +132,22 @@ export const GemToken = ({ gems }: GemTokenProps) => {
   };
 
   const handleConfirm = () => {
-    if (Object.keys(selectedGems).length === 0) {
+    if (!gameState || Object.keys(selectedGems).length === 0) {
       return;
     }
 
-    const success = takeGems(selectedGems);
+    const currentPlayer = gameState.players[gameState.currentPlayer];
+    performAction({
+      type: 'takeGems',
+      playerId: currentPlayer.id,
+      playerName: currentPlayer.name,
+      details: {
+        gems: selectedGems
+      },
+      timestamp: Date.now()
+    });
 
-    if (success && gameState) {
-      const currentPlayer = gameState.players[gameState.currentPlayer];
-      addAction({
-        playerId: currentPlayer.id,
-        playerName: currentPlayer.name,
-        type: 'takeGems',
-        details: {
-          gems: selectedGems
-        }
-      });
-      setSelectedGems({});
-    }
+    setSelectedGems({});
   };
 
   return (
