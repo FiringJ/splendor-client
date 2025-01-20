@@ -3,7 +3,6 @@
 import { Noble as NobleType } from '../../types/game';
 import { Noble } from './Noble';
 import { useGameStore } from '../../store/gameStore';
-import type { GameStore } from '../../store/gameStore';
 import { GameValidator } from '../../lib/game/validator';
 
 interface NobleDisplayProps {
@@ -11,7 +10,7 @@ interface NobleDisplayProps {
 }
 
 export const NobleDisplay = ({ nobles }: NobleDisplayProps) => {
-  const gameState = useGameStore((state: GameStore) => state.gameState);
+  const gameState = useGameStore(state => state.gameState);
 
   if (!gameState) return null;
 
