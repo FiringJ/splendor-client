@@ -85,7 +85,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
           newState = GameActions.purchaseCard(currentState, card);
           break;
         case 'reserveCard':
-          // ... existing reserve card code ...
+          const reserveTargetCard = [...currentState.cards.level1, ...currentState.cards.level2, ...currentState.cards.level3]
+            .find(c => c.gem === action.details.card?.gem && c.points === action.details.card?.points);
+          if (!reserveTargetCard) throw new Error('Card not found');
+          newState = GameActions.reserveCard(currentState, reserveTargetCard);
           break;
         case 'endTurn':
           newState = { ...currentState };
