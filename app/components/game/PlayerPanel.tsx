@@ -20,24 +20,21 @@ const gemColors: Record<GemType, string> = {
 };
 
 export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
-  const { purchaseCard, addAction } = useGameStore();
+  const { performAction } = useGameStore();
 
   const handlePurchaseReservedCard = (card: CardType) => {
-    const success = purchaseCard(card);
-
-    if (success) {
-      addAction({
-        playerId: player.id,
-        playerName: player.name,
-        type: 'purchaseCard',
-        details: {
-          card: {
-            gem: card.gem,
-            points: card.points
-          }
+    performAction({
+      type: 'purchaseCard',
+      playerId: player.id,
+      playerName: player.name,
+      timestamp: Date.now(),
+      details: {
+        card: {
+          gem: card.gem,
+          points: card.points
         }
-      });
-    }
+      }
+    });
   };
 
   return (
