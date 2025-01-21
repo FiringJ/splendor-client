@@ -104,7 +104,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       newState.actions = [...newState.actions, action];
 
       // 检查是否有玩家达到15分
-      const hasPlayerReached15Points = newState.players.some(player => player.points >= 1);
+      const hasPlayerReached15Points = newState.players.some(player => player.points >= 15);
       if (hasPlayerReached15Points && !newState.lastRound) {
         // 标记为最后一轮，并记录触发玩家的位置
         newState.lastRound = true;
