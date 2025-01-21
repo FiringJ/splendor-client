@@ -17,39 +17,46 @@ export class GameActions {
     cardBonuses: Partial<Record<GemType, number>>,
     player: Player
   ) {
-    // 处理每种需要的宝石
-    Object.entries(card.cost).forEach(([gem, cost]) => {
-      if (!cost) return; // 跳过不需要的宝石
+    let totalGoldNeeded = 0;
+    const payments: Partial<Record<GemType, number>> = {};
 
+    // 第一步：计算每种宝石实际需要支付的数量
+    Object.entries(card.cost).forEach(([gem, cost]) => {
+      if (!cost) return;
       const gemType = gem as GemType;
       const playerGems = player.gems[gemType] || 0;
       const bonus = cardBonuses[gemType] || 0;
-      const actualCost = Math.max(0, cost - bonus); // 实际需要支付的数量（考虑永久宝石）
+      const actualCost = Math.max(0, cost - bonus);
 
       if (playerGems >= actualCost) {
-        // 如果玩家有足够的宝石，直接支付
-        player.gems[gemType] = playerGems - actualCost;
-        newState.gems[gemType] = (newState.gems[gemType] || 0) + actualCost;
+        // 如果普通宝石足够，记录需要支付的数量
+        payments[gemType] = actualCost;
       } else {
-        // 需要使用黄金补足差额
-        const remaining = actualCost - playerGems;
-        const availableGold = player.gems.gold || 0;
-
-        if (availableGold < remaining) {
-          throw new Error('Not enough gold tokens');
-        }
-
-        // 先用完所有该类型的宝石
-        if (playerGems > 0) {
-          player.gems[gemType] = 0;
-          newState.gems[gemType] = (newState.gems[gemType] || 0) + playerGems;
-        }
-
-        // 然后使用黄金补足
-        player.gems.gold = availableGold - remaining;
-        newState.gems.gold = (newState.gems.gold || 0) + remaining;
+        // 记录普通宝石的支付量，并累计需要的黄金数量
+        payments[gemType] = playerGems;
+        totalGoldNeeded += actualCost - playerGems;
       }
     });
+
+    // 检查是否有足够的黄金
+    if ((player.gems.gold || 0) < totalGoldNeeded) {
+      throw new Error('Not enough gold tokens');
+    }
+
+    // 执行支付
+    Object.entries(payments).forEach(([gem, amount]) => {
+      const gemType = gem as GemType;
+      if (amount > 0) {
+        player.gems[gemType] = (player.gems[gemType] || 0) - amount;
+        newState.gems[gemType] = (newState.gems[gemType] || 0) + amount;
+      }
+    });
+
+    // 支付黄金
+    if (totalGoldNeeded > 0) {
+      player.gems.gold = (player.gems.gold || 0) - totalGoldNeeded;
+      newState.gems.gold = (newState.gems.gold || 0) + totalGoldNeeded;
+    }
   }
 
   // 处理拿取宝石动作

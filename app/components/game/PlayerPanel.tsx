@@ -89,9 +89,9 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
         {/* 左侧：预留卡区域 */}
         <div>
           <h3 className="text-sm font-bold mb-2">预留卡: {player.reservedCards.length}/3</h3>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-row gap-2">
             {player.reservedCards.map((card) => (
-              <div key={card.id} className="transform scale-75 origin-top-left relative">
+              <div key={card.id} className="transform scale-75 origin-top-left relative -ml-4 first:ml-0">
                 <Card
                   card={card}
                   disabled={!isActive}
