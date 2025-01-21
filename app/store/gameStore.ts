@@ -139,7 +139,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
               }
             }
           }
-
+          newState.winner = winnerName;
+          newState.status = 'finished';
         }
       }
 
