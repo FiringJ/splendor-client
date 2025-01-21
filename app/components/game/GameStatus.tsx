@@ -1,8 +1,7 @@
 import { useGameStore } from '../../store/gameStore';
-import type { GameStore } from '../../store/gameStore';
 
 export const GameStatus = () => {
-  const gameState = useGameStore((state: GameStore) => state.gameState);
+  const gameState = useGameStore(state => state.gameState);
 
   if (!gameState) return null;
 
