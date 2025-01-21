@@ -65,6 +65,8 @@ export class GameValidator {
       return acc;
     }, {} as Partial<Record<GemType, number>>);
 
+    let remainingGold = player.gems.gold || 0;
+
     // 检查每种宝石的需求
     for (const [gemType, required] of Object.entries(card.cost)) {
       if (!required) continue; // 跳过不需要的宝石类型
@@ -78,10 +80,11 @@ export class GameValidator {
         // 计算还需要多少资源
         const shortfall = required - totalAvailable;
         // 检查是否有足够的黄金补足
-        if ((player.gems.gold || 0) < shortfall) {
-          console.log(`Need ${shortfall} gold for ${gemType}, but only have ${player.gems.gold || 0}`);
+        if (remainingGold < shortfall) {
           return false;
         }
+        // 使用黄金补足差额
+        remainingGold -= shortfall;
       }
     }
 
