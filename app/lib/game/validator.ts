@@ -100,11 +100,8 @@ export class GameValidator {
 
     // 如果要获得黄金，检查宝石总数是否会超过限制
     const currentGemCount = this.getCurrentGemCount(player);
-    if (currentGemCount >= this.MAX_GEMS) {
-      return false;
-    }
-
-    return true;
+    // 只有当玩家宝石数量小于上限时才能预留（因为预留会得到一个金币）
+    return currentGemCount < this.MAX_GEMS;
   }
 
   // 验证是否可以获得贵族

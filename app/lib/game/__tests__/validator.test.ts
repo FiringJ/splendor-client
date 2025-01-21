@@ -1,5 +1,5 @@
 import { GameValidator } from '../validator';
-import { GameState, Player, Card } from '../../../types/game';
+import { GameState, Player, Card, Noble } from '../../../types/game';
 
 describe('GameValidator', () => {
   describe('canTakeGems', () => {
@@ -141,6 +141,151 @@ describe('GameValidator', () => {
         spritePosition: { x: 0, y: 0 }
       });
       const result = GameValidator.canPurchaseCard(card, player);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('canReserveCard', () => {
+    let player: Player;
+
+    beforeEach(() => {
+      player = {
+        id: '1',
+        name: 'Player 1',
+        gems: {
+          ruby: 1,
+          sapphire: 1,
+          emerald: 1,
+          diamond: 1,
+          onyx: 1,
+          gold: 0
+        },
+        cards: [],
+        reservedCards: [],
+        nobles: [],
+        points: 0
+      };
+    });
+
+    test('应该允许预留卡牌当预留数量未达到上限时', () => {
+      const result = GameValidator.canReserveCard(player);
+      expect(result).toBe(true);
+    });
+
+    test('不应该允许预留卡牌当已有3张预留卡时', () => {
+      player.reservedCards = [
+        {
+          id: 1,
+          level: 1,
+          cost: {},
+          points: 0,
+          gem: 'ruby',
+          spritePosition: { x: 0, y: 0 }
+        },
+        {
+          id: 2,
+          level: 1,
+          cost: {},
+          points: 0,
+          gem: 'sapphire',
+          spritePosition: { x: 0, y: 0 }
+        },
+        {
+          id: 3,
+          level: 1,
+          cost: {},
+          points: 0,
+          gem: 'emerald',
+          spritePosition: { x: 0, y: 0 }
+        }
+      ];
+      const result = GameValidator.canReserveCard(player);
+      expect(result).toBe(false);
+    });
+
+    test('不应该允许预留卡牌当宝石数量已达到上限时', () => {
+      player.gems = {
+        ruby: 4,
+        sapphire: 2,
+        emerald: 1,
+        diamond: 1,
+        onyx: 2,
+        gold: 0
+      }; // 总共10个宝石，已达到上限
+      const result = GameValidator.canReserveCard(player);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('canAcquireNoble', () => {
+    let player: Player;
+    let noble: Noble;
+
+    beforeEach(() => {
+      player = {
+        id: '1',
+        name: 'Player 1',
+        gems: {},
+        cards: [],
+        reservedCards: [],
+        nobles: [],
+        points: 0
+      };
+
+      noble = {
+        id: 1,
+        points: 3,
+        name: 'Test Noble',
+        requirements: {
+          ruby: 3,
+          sapphire: 2
+        }
+      };
+    });
+
+    test('应该允许获得贵族当满足所有要求时', () => {
+      // 添加足够的卡牌以满足贵族要求
+      player.cards = [
+        { id: 1, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 2, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 3, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 4, level: 1, cost: {}, points: 0, gem: 'sapphire', spritePosition: { x: 0, y: 0 } },
+        { id: 5, level: 1, cost: {}, points: 0, gem: 'sapphire', spritePosition: { x: 0, y: 0 } }
+      ];
+      const result = GameValidator.canAcquireNoble(noble, player);
+      expect(result).toBe(true);
+    });
+
+    test('不应该允许获得贵族当不满足要求时', () => {
+      // 添加不足的卡牌
+      player.cards = [
+        { id: 1, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 2, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 3, level: 1, cost: {}, points: 0, gem: 'sapphire', spritePosition: { x: 0, y: 0 } }
+      ];
+      const result = GameValidator.canAcquireNoble(noble, player);
+      expect(result).toBe(false);
+    });
+
+    test('不应该允许获得贵族当完全没有所需卡牌时', () => {
+      // 玩家没有任何卡牌
+      const result = GameValidator.canAcquireNoble(noble, player);
+      expect(result).toBe(false);
+    });
+
+    test('应该正确处理没有要求的宝石类型', () => {
+      // 贵族只要求红宝石
+      noble.requirements = {
+        ruby: 2
+      };
+
+      // 玩家有足够的红宝石卡牌，以及其他类型的卡牌
+      player.cards = [
+        { id: 1, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 2, level: 1, cost: {}, points: 0, gem: 'ruby', spritePosition: { x: 0, y: 0 } },
+        { id: 3, level: 1, cost: {}, points: 0, gem: 'emerald', spritePosition: { x: 0, y: 0 } }
+      ];
+      const result = GameValidator.canAcquireNoble(noble, player);
       expect(result).toBe(true);
     });
   });
