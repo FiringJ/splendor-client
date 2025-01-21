@@ -58,6 +58,9 @@ export interface GameState {
     level1: Card[];
     level2: Card[];
     level3: Card[];
+    deck1: Card[];
+    deck2: Card[];
+    deck3: Card[];
   };
   nobles: Noble[];
   status: 'waiting' | 'playing' | 'finished';
