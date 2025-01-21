@@ -18,13 +18,7 @@ export class GameValidator {
 
     // 检查是否会超过宝石上限
     if (currentGemCount + selectedGemCount > this.MAX_GEMS) {
-      // 如果会超过上限，只允许拿取不超过上限的数量
-      const remainingSpace = this.MAX_GEMS - currentGemCount;
-      if (selectedGemCount > remainingSpace) {
-        return false;
-      }
-      // 在有限制的情况下，允许拿取较少的宝石
-      return true;
+      return false;
     }
 
     // 禁止选择黄金
@@ -44,13 +38,22 @@ export class GameValidator {
 
     // 规则2: 如果选择不同颜色
     if (sameColorCount === 1) {
-      // 必须选择3个不同颜色（除非受到上限限制）
+      // 检查每种选择的宝石是否有足够数量
+      for (const [gemType, count] of Object.entries(selectedGems)) {
+        if ((gameState.gems[gemType as GemType] || 0) < (count || 0)) {
+          return false;
+        }
+      }
+
+      // 如果空间足够，必须选择3个不同颜色
       if (currentGemCount + 3 <= this.MAX_GEMS) {
         return differentColors === 3;
       }
+
+      // 如果空间不足3个，允许选择1-2个不同颜色
+      return differentColors > 0 && differentColors <= Math.min(3, this.MAX_GEMS - currentGemCount);
     }
 
-    // 不允许其他情况（比如只选1个或2个不同颜色）
     return false;
   }
 
