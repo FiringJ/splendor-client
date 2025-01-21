@@ -119,6 +119,7 @@ export class AIPlayer {
         playerName: player.name,
         details: {
           card: {
+            id: bestCard.card.id,
             gem: bestCard.card.gem,
             points: bestCard.card.points
           }
@@ -144,6 +145,7 @@ export class AIPlayer {
           playerName: player.name,
           details: {
             card: {
+              id: bestCard.id,
               gem: bestCard.gem,
               points: bestCard.points
             }

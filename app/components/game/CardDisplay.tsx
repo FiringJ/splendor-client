@@ -41,6 +41,7 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
       playerName: currentPlayer.name,
       details: {
         card: {
+          id: card.id,
           gem: card.gem,
           points: card.points
         }
@@ -60,6 +61,7 @@ export const CardDisplay = ({ cards }: CardDisplayProps) => {
       playerName: currentPlayer.name,
       details: {
         card: {
+          id: card.id,
           gem: card.gem,
           points: card.points
         },

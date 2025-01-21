@@ -9,6 +9,7 @@ import { PlayerPanel } from './PlayerPanel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ActionHistory } from './ActionHistory';
 import { AIControl } from './AIControl';
+import { GameOverDialog } from './GameOverDialog';
 
 export const GameBoard = () => {
   const gameState = useGameStore(state => state.gameState);
@@ -35,6 +36,7 @@ export const GameBoard = () => {
             onCancel={() => useGameStore.getState().hideConfirm()}
           />
         )}
+        <GameOverDialog />
 
         <div className="h-full mx-auto px-4 py-2 grid grid-cols-[360px_minmax(600px,_1fr)_400px] gap-4">
           {/* 左侧：贵族区域和操作历史 */}

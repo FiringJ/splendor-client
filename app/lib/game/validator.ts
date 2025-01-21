@@ -103,10 +103,18 @@ export class GameValidator {
 
   // 验证是否可以获得贵族
   static canAcquireNoble(noble: Noble, player: Player): boolean {
-    const playerCards = this.calculatePlayerResources(player);
+    // 计算玩家拥有的永久宝石（卡牌）
+    const cardBonuses = player.cards.reduce((acc, card) => {
+      acc[card.gem] = (acc[card.gem] || 0) + 1;
+      return acc;
+    }, {} as Partial<Record<GemType, number>>);
 
-    for (const [gem, required] of Object.entries(noble.requirements)) {
-      if ((playerCards[gem as GemType] || 0) < required) return false;
+    // 检查是否满足贵族要求
+    for (const [gemType, required] of Object.entries(noble.requirements)) {
+      const owned = cardBonuses[gemType as GemType] || 0;
+      if (owned < (required || 0)) {
+        return false;
+      }
     }
 
     return true;

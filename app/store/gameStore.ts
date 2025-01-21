@@ -41,6 +41,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       nobles: generateInitialNobles(players.length + 1),
       status: 'playing',
       lastRound: false,
+      lastRoundStartPlayer: null,
       winner: null,
       actions: []
     };
@@ -79,14 +80,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
           newState = GameActions.takeGems(currentState, action.details.gems || {});
           break;
         case 'purchaseCard':
-          const card = [...currentState.cards.level1, ...currentState.cards.level2, ...currentState.cards.level3]
-            .find(c => c.gem === action.details.card?.gem && c.points === action.details.card?.points);
+          const card = [...currentState.cards.level1, ...currentState.cards.level2, ...currentState.cards.level3,
+          ...currentState.players[currentState.currentPlayer].reservedCards]
+            .find(c => c.id === action.details.card?.id);
           if (!card) throw new Error('Card not found');
           newState = GameActions.purchaseCard(currentState, card);
           break;
         case 'reserveCard':
           const reserveTargetCard = [...currentState.cards.level1, ...currentState.cards.level2, ...currentState.cards.level3]
-            .find(c => c.gem === action.details.card?.gem && c.points === action.details.card?.points);
+            .find(c => c.id === action.details.card?.id);
           if (!reserveTargetCard) throw new Error('Card not found');
           newState = GameActions.reserveCard(currentState, reserveTargetCard);
           break;
@@ -101,11 +103,51 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // 记录动作
       newState.actions = [...newState.actions, action];
 
+      // 检查是否有玩家达到15分
+      const hasPlayerReached15Points = newState.players.some(player => player.points >= 1);
+      if (hasPlayerReached15Points && !newState.lastRound) {
+        // 标记为最后一轮，并记录触发玩家的位置
+        newState.lastRound = true;
+        newState.lastRoundStartPlayer = newState.currentPlayer;
+      }
+
+      // 如果是最后一轮，检查是否所有玩家都进行了最后一次行动
+      if (newState.lastRound) {
+        // 计算从开始玩家到当前玩家是否所有人都进行了一轮
+        let hasCompletedLastRound = false;
+        if (newState.lastRoundStartPlayer === null) {
+          hasCompletedLastRound = false;
+        } else {
+          // 如果当前玩家是最后一轮开始玩家的前一位，说明最后一轮已经完成
+          const lastPlayer = (newState.lastRoundStartPlayer - 1 + newState.players.length) % newState.players.length;
+          hasCompletedLastRound = newState.currentPlayer === lastPlayer;
+        }
+
+        if (hasCompletedLastRound) {
+          // 找出分数最高的玩家
+          let maxPoints = -1;
+          let winnerName: string | null = null;
+          for (const player of newState.players) {
+            if (player.points > maxPoints) {
+              maxPoints = player.points;
+              winnerName = player.name;
+            } else if (player.points === maxPoints) {
+              // 如果分数相同，比较拥有的卡牌数量（平局规则）
+              const currentWinnerCards = newState.players.find(p => p.name === winnerName)?.cards.length || 0;
+              if (player.cards.length < currentWinnerCards) {
+                winnerName = player.name;
+              }
+            }
+          }
+
+        }
+      }
+
       // 更新游戏状态
       set({ gameState: newState });
 
       // 如果启用了AI且当前玩家是AI，则执行AI的回合
-      if (get().isAIEnabled && newState.players[newState.currentPlayer].name === 'AI') {
+      if (get().isAIEnabled && newState.players[newState.currentPlayer].name === 'AI' && newState.status === 'playing') {
         setTimeout(() => {
           const aiAction = AIPlayer.getNextAction(newState);
           get().performAction(aiAction);

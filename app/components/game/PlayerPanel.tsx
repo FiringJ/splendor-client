@@ -30,6 +30,7 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
       timestamp: Date.now(),
       details: {
         card: {
+          id: card.id,
           gem: card.gem,
           points: card.points
         }
