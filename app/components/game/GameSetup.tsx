@@ -12,26 +12,33 @@ export function GameSetup() {
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [mode, setMode] = useState<'local' | 'online'>('local');
   const { createRoom, joinRoom, startGame } = useSocket();
-  const initializeGame = useGameStore(state => state.initializeGame);
   const setGameState = useGameStore(state => state.setGameState);
   const enableAI = useGameStore(state => state.enableAI);
   const roomState = useRoomStore(state => state.roomState);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
 
-  const handleLocalGame = () => {
-    // 创建玩家数组
-    const players = Array.from({ length: parseInt(playerCount) }, (_, i) => ({
-      id: `player${i}`,
-      name: i === parseInt(playerCount) - 1 && includeAI ? 'AI' : `玩家${i + 1}`,
-      gems: { diamond: 0, sapphire: 0, emerald: 0, ruby: 0, onyx: 0, gold: 0 },
-      cards: [],
-      reservedCards: [],
-      nobles: [],
-      points: 0
-    }));
+  const handleLocalGame = async () => {
+    try {
+      // 先创建房间
+      const roomId = await createRoom(playerId);
 
-    initializeGame(players);
-    enableAI(includeAI);
+      // 如果需要多个玩家，创建AI玩家加入房间
+      for (let i = 1; i < parseInt(playerCount); i++) {
+        const aiId = `ai_${i}_${Math.random().toString(36).substr(2, 9)}`;
+        await joinRoom(roomId, aiId);
+      }
+
+      // 开始游戏
+      const response = await startGame(roomId);
+      if (response.success && response.gameState) {
+        setGameState(response.gameState);
+        if (includeAI) {
+          enableAI(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to start local game:', error);
+    }
   };
 
   const handleCreateRoom = async () => {

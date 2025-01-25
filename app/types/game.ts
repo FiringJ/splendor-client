@@ -1,4 +1,4 @@
-export type GemType = 'red' | 'green' | 'blue' | 'white' | 'black' | 'gold';
+export type GemType = 'diamond' | 'sapphire' | 'emerald' | 'ruby' | 'onyx' | 'gold';
 
 export type GameActionType =
   | 'TAKE_GEMS'

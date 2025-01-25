@@ -3,7 +3,7 @@
 import { useGameStore } from '../../store/gameStore';
 import { useRoomStore } from '../../store/roomStore';
 import { useSocket } from '../../hooks/useSocket';
-import type { Player, GameAction } from '../../types/game';
+import type { Player, GameAction, GemType } from '../../types/game';
 import { NobleDisplay } from './NobleDisplay';
 import { CardDisplay } from './CardDisplay';
 import { GemToken } from './GemToken';
@@ -12,8 +12,8 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { ActionHistory } from './ActionHistory';
 import { AIControl } from './AIControl';
 import { GameOverDialog } from './GameOverDialog';
-import { Alert } from '../ui/Alert';
-import { Spinner } from '../ui/Spinner';
+import { Alert } from '../../components/ui/Alert';
+import { Spinner } from '../../components/ui/Spinner';
 import { GameTester } from './GameTester';
 
 export const GameBoard = () => {
@@ -36,6 +36,15 @@ export const GameBoard = () => {
   };
 
   const isCurrentPlayer = gameState.currentPlayer?.id === gameState.currentTurn;
+
+  const handleGemSelect = (gemType: GemType) => {
+    handleAction({
+      type: 'TAKE_GEMS',
+      payload: {
+        gems: { [gemType]: 1 } as Record<GemType, number>
+      }
+    });
+  };
 
   return (
     <div className="flex flex-col items-center gap-4 p-4">
@@ -108,7 +117,7 @@ export const GameBoard = () => {
               <h3 className="text-lg font-bold text-gray-800 mb-2">宝石区域</h3>
               <GemToken
                 gems={gameState.gems}
-                onSelect={handleAction}
+                onSelect={handleGemSelect}
                 disabled={loading || !isCurrentPlayer}
               />
             </div>

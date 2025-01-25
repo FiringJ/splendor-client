@@ -3,21 +3,21 @@
 import type { ActionHistoryProps } from '../../types/components';
 import type { GameAction, GemType } from '../../types/game';
 
-const gemColors: Record<GemType, string> = {
-  red: 'text-red-500',
-  green: 'text-green-500',
-  blue: 'text-blue-500',
-  white: 'text-gray-500',
-  black: 'text-gray-800',
+const gemColorMap: Record<GemType, string> = {
+  diamond: 'text-gray-500',
+  sapphire: 'text-blue-500',
+  emerald: 'text-green-500',
+  ruby: 'text-red-500',
+  onyx: 'text-gray-800',
   gold: 'text-yellow-500',
 };
 
-const gemNames: Record<GemType, string> = {
-  red: '红宝石',
-  green: '祖母绿',
-  blue: '蓝宝石',
-  white: '钻石',
-  black: '玛瑙',
+const gemNameMap: Record<GemType, string> = {
+  diamond: '钻石',
+  sapphire: '蓝宝石',
+  emerald: '祖母绿',
+  ruby: '红宝石',
+  onyx: '玛瑙',
   gold: '黄金',
 };
 
@@ -25,8 +25,8 @@ const formatAction = (action: GameAction) => {
   switch (action.type) {
     case 'TAKE_GEMS':
       return `获取宝石：${Object.entries(action.payload.gems)
-        .filter(([_, count]) => count > 0)
-        .map(([gem, count]) => `${count} 个${gemNames[gem as GemType]}`)
+        .filter(([, count]) => count > 0)
+        .map(([gem, count]) => `${count} 个${gemNameMap[gem as GemType]}`)
         .join('、')}`;
     case 'PURCHASE_CARD':
       return `购买卡牌：${action.payload.cardId}`;
@@ -34,6 +34,10 @@ const formatAction = (action: GameAction) => {
       return `预定卡牌：${action.payload.cardId}`;
     case 'CLAIM_NOBLE':
       return `获得贵族：${action.payload.nobleId}`;
+    case 'TOGGLE_AI':
+      return `${action.payload.enabled ? '开启' : '关闭'} AI`;
+    case 'RESTART_GAME':
+      return '重新开始游戏';
     default:
       return '未知操作';
   }
@@ -49,7 +53,7 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
           {actions.map((action, index) => (
             <div
               key={index}
-              className="text-sm text-gray-600 border-b border-gray-100 last:border-b-0 py-2"
+              className={`text-sm ${gemColorMap[action.type === 'TAKE_GEMS' ? (Object.entries(action.payload.gems).find(([, count]) => count > 0)?.[0] as GemType) || 'diamond' : 'diamond']} border-b border-gray-100 last:border-b-0 py-2`}
             >
               {formatAction(action)}
             </div>
@@ -58,4 +62,4 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
       )}
     </div>
   );
-}; 
+};

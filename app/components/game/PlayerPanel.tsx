@@ -9,21 +9,21 @@ import { useSocket } from '../../hooks/useSocket';
 import { useRoomStore } from '../../store/roomStore';
 import { GameValidator } from '../../lib/game/validator';
 
-const gemColors: Record<GemType, string> = {
-  red: 'text-white bg-red-500',
-  green: 'text-white bg-green-500',
-  blue: 'text-white bg-blue-500',
-  white: 'text-gray-700 bg-white border-2 border-gray-300',
-  black: 'text-white bg-gray-800',
+const gemColorMap: Record<GemType, string> = {
+  diamond: 'text-gray-800 bg-white',
+  sapphire: 'text-white bg-blue-500',
+  emerald: 'text-white bg-green-500',
+  ruby: 'text-white bg-red-500',
+  onyx: 'text-white bg-gray-800',
   gold: 'text-black bg-yellow-400',
 };
 
-const gemNames: Record<GemType, string> = {
-  red: '红宝石',
-  green: '祖母绿',
-  blue: '蓝宝石',
-  white: '钻石',
-  black: '玛瑙',
+const gemNameMap: Record<GemType, string> = {
+  diamond: '钻石',
+  sapphire: '蓝宝石',
+  emerald: '祖母绿',
+  ruby: '红宝石',
+  onyx: '玛瑙',
   gold: '黄金',
 };
 
@@ -74,25 +74,25 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
           <h3 className="text-sm font-bold">宝石资源</h3>
           <span className="text-sm text-gray-500">{Object.values(player.gems).reduce((a, b) => a + b, 0)}/10</span>
         </div>
-        <div className="flex gap-2.5">
-          {/* 普通宝石组 */}
-          {(['white', 'blue', 'green', 'red', 'black'] as const).map((gemType) => (
+        <div className="flex gap-2">
+          {(['diamond', 'sapphire', 'emerald', 'ruby', 'onyx'] as GemType[]).map((gemType) => (
             <div key={gemType} className="flex gap-1">
-              <div className={`w-6 h-6 ${gemColors[gemType]} 
+              <div className={`w-6 h-6 ${gemColorMap[gemType]} 
                             flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
                 {player.cards.filter(card => card.gem === gemType).length}
               </div>
-              <div className={`w-6 h-6 rounded-full ${gemColors[gemType]} 
-                            flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
+              <div className={`w-6 h-6 rounded-full ${gemColorMap[gemType]} 
+                            flex items-center justify-center text-sm font-bold shadow-sm select-none`}
+                title={gemNameMap[gemType]}>
                 {player.gems[gemType] || 0}
               </div>
             </div>
           ))}
-
           {/* 黄金组 */}
           <div className="flex">
-            <div className={`w-6 h-6 rounded-full ${gemColors['gold']} 
-                          flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
+            <div className={`w-6 h-6 rounded-full ${gemColorMap['gold']} 
+                          flex items-center justify-center text-sm font-bold shadow-sm select-none`}
+              title={gemNameMap['gold']}>
               {player.gems['gold'] || 0}
             </div>
           </div>

@@ -1,138 +1,136 @@
-import { GameState, Player, Card, Noble, GemType } from '../../types/game';
+'use client';
+
+import type { GameState, GameAction, Card, Noble, GemType } from '../../types/game';
 
 export class GameValidator {
-  private static MAX_GEMS = 10;
+  static canPurchaseCard(gameState: GameState, action: GameAction): boolean {
+    if (action.type !== 'PURCHASE_CARD') return false;
+    if (!gameState.currentPlayer) return false;
 
-  private static getCurrentGemCount(player: Player): number {
-    return Object.values(player.gems).reduce((sum, count) => sum + (count || 0), 0);
+    // 检查是否是当前玩家的回合
+    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+
+    const { cardId, level } = action.payload;
+    const card = this.findCard(gameState, cardId, level);
+    if (!card) return false;
+
+    return this.hasEnoughResources(gameState.currentPlayer, card);
   }
 
-  // 验证拿取宝石是否合法
-  static canTakeGems(
-    selectedGems: Partial<Record<GemType, number>>,
-    gameState: GameState
-  ): boolean {
-    const currentPlayer = gameState.players[gameState.currentPlayer];
-    const currentGemCount = this.getCurrentGemCount(currentPlayer);
-    const selectedGemCount = Object.values(selectedGems).reduce((a, b) => a + (b || 0), 0);
+  static canReserveCard(gameState: GameState, action: GameAction): boolean {
+    if (action.type !== 'RESERVE_CARD') return false;
+    if (!gameState.currentPlayer) return false;
 
-    // 检查是否会超过宝石上限
-    if (currentGemCount + selectedGemCount > this.MAX_GEMS) {
-      return false;
+    // 检查是否是当前玩家的回合
+    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+
+    // 检查预留卡数量限制
+    if (gameState.currentPlayer.reservedCards.length >= 3) return false;
+
+    const { cardId, level } = action.payload;
+    // 如果是从牌堆预定
+    if (cardId.startsWith('deck')) {
+      const deckCards = level === 1 ? gameState.cards.deck1 :
+        level === 2 ? gameState.cards.deck2 :
+          level === 3 ? gameState.cards.deck3 : [];
+      return deckCards.length > 0;
     }
 
-    // 禁止选择黄金
-    if (selectedGems.gold) return false;
+    // 如果是预定可见的卡牌
+    const card = this.findCard(gameState, cardId, level);
+    return !!card;
+  }
 
-    const differentColors = Object.keys(selectedGems).length;
-    const sameColorCount = Math.max(...Object.values(selectedGems).map(v => v || 0));
+  static canTakeGems(gameState: GameState, action: GameAction): boolean {
+    if (action.type !== 'TAKE_GEMS') return false;
+    if (!gameState.currentPlayer) return false;
 
-    // 规则1: 如果选择2个同色宝石
-    if (sameColorCount === 2) {
-      // 必须只选择一种颜色，且该颜色必须有至少4个
-      if (differentColors !== 1) return false;
-      const gemType = Object.entries(selectedGems).find(([, count]) => count === 2)?.[0];
-      if (!gemType) return false;
-      return gameState.gems[gemType as GemType] >= 4;
+    // 检查是否是当前玩家的回合
+    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+
+    const { gems } = action.payload;
+    const selectedCount = Object.values(gems).reduce((sum, count) => sum + count, 0);
+    if (selectedCount === 0) return false;
+
+    // 检查玩家宝石总数是否会超过10个
+    const currentGemCount = Object.values(gameState.currentPlayer.gems).reduce((sum, count) => sum + count, 0);
+    if (currentGemCount + selectedCount > 10) return false;
+
+    // 检查是否有足够的宝石可以拿
+    for (const [type, count] of Object.entries(gems) as [GemType, number][]) {
+      if (count > 0 && (gameState.gems[type] ?? 0) < count) return false;
     }
 
-    // 规则2: 如果选择不同颜色
-    if (sameColorCount === 1) {
-      // 检查每种选择的宝石是否有足够数量
-      for (const [gemType, count] of Object.entries(selectedGems)) {
-        if ((gameState.gems[gemType as GemType] || 0) < (count || 0)) {
-          return false;
-        }
-      }
+    // 检查选择的宝石是否符合规则
+    const differentColors = Object.entries(gems).filter(([, count]) => count > 0).length;
+    const maxCount = Math.max(...Object.values(gems));
 
-      // 如果空间足够，必须选择3个不同颜色
-      if (currentGemCount + 3 <= this.MAX_GEMS) {
-        return differentColors === 3;
-      }
+    // 规则1：可以拿3个不同颜色的宝石
+    if (differentColors === 3 && maxCount === 1) return true;
 
-      // 如果空间不足3个，允许选择1-2个不同颜色
-      return differentColors > 0 && differentColors <= Math.min(3, this.MAX_GEMS - currentGemCount);
+    // 规则2：可以拿2个相同颜色的宝石（当该颜色宝石数量大于等于4个时）
+    if (differentColors === 1 && maxCount === 2) {
+      const [gemType] = Object.entries(gems).find(([, count]) => count === 2) || [];
+      if (gemType && (gameState.gems[gemType as GemType] ?? 0) >= 4) return true;
     }
 
     return false;
   }
 
-  // 验证是否可以购买卡牌
-  static canPurchaseCard(card: Card, player: Player): boolean {
-    // 计算玩家拥有的资源（包括卡牌提供的永久宝石）
-    const cardBonuses = player.cards.reduce((acc, c) => {
-      acc[c.gem] = (acc[c.gem] || 0) + 1;
-      return acc;
-    }, {} as Partial<Record<GemType, number>>);
+  static canClaimNoble(gameState: GameState, action: GameAction): boolean {
+    if (action.type !== 'CLAIM_NOBLE') return false;
+    if (!gameState.currentPlayer) return false;
+
+    // 检查是否是当前玩家的回合
+    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+
+    const { nobleId } = action.payload;
+    const noble = gameState.nobles.find(n => n.id === nobleId);
+    if (!noble) return false;
+
+    return this.meetsNobleRequirements(gameState.currentPlayer, noble);
+  }
+
+  private static findCard(gameState: GameState, cardId: string, level: number): Card | undefined {
+    const cards = level === 1 ? gameState.cards.level1 :
+      level === 2 ? gameState.cards.level2 :
+        level === 3 ? gameState.cards.level3 : [];
+
+    return cards.find(card => card.id === cardId);
+  }
+
+  private static hasEnoughResources(player: GameState['currentPlayer'], card: Card): boolean {
+    if (!player) return false;
+
+    const cardCounts = player.cards.reduce((counts, card) => {
+      counts[card.gem] = (counts[card.gem] || 0) + 1;
+      return counts;
+    }, {} as Record<GemType, number>);
 
     let remainingGold = player.gems.gold || 0;
 
-    // 检查每种宝石的需求
-    for (const [gemType, required] of Object.entries(card.cost)) {
-      if (!required) continue; // 跳过不需要的宝石类型
-
-      const gemAvailable = player.gems[gemType as GemType] || 0;
-      const cardBonus = cardBonuses[gemType as GemType] || 0;
-      const totalAvailable = gemAvailable + cardBonus;
-
-      // 如果总可用资源不足以支付成本
-      if (totalAvailable < required) {
-        // 计算还需要多少资源
-        const shortfall = required - totalAvailable;
-        // 检查是否有足够的黄金补足
-        if (remainingGold < shortfall) {
-          return false;
-        }
-        // 使用黄金补足差额
-        remainingGold -= shortfall;
-      }
+    for (const [gemType, required] of Object.entries(card.cost) as [GemType, number][]) {
+      const available = (cardCounts[gemType] || 0) + (player.gems[gemType] || 0);
+      const goldNeeded = Math.max(0, required - available);
+      if (goldNeeded > remainingGold) return false;
+      remainingGold -= goldNeeded;
     }
 
     return true;
   }
 
-  // 验证是否可以预留卡牌
-  static canReserveCard(player: Player): boolean {
-    // 检查预留卡数量限制
-    if (player.reservedCards.length >= 3) {
-      return false;
-    }
+  private static meetsNobleRequirements(player: GameState['currentPlayer'], noble: Noble): boolean {
+    if (!player) return false;
 
-    // 如果要获得黄金，检查宝石总数是否会超过限制
-    const currentGemCount = this.getCurrentGemCount(player);
-    // 只有当玩家宝石数量小于上限时才能预留（因为预留会得到一个金币）
-    return currentGemCount < this.MAX_GEMS;
-  }
+    const cardCounts = player.cards.reduce((counts, card) => {
+      counts[card.gem] = (counts[card.gem] || 0) + 1;
+      return counts;
+    }, {} as Record<GemType, number>);
 
-  // 验证是否可以获得贵族
-  static canAcquireNoble(noble: Noble, player: Player): boolean {
-    // 计算玩家拥有的永久宝石（卡牌）
-    const cardBonuses = player.cards.reduce((acc, card) => {
-      acc[card.gem] = (acc[card.gem] || 0) + 1;
-      return acc;
-    }, {} as Partial<Record<GemType, number>>);
-
-    // 检查是否满足贵族要求
-    for (const [gemType, required] of Object.entries(noble.requirements)) {
-      const owned = cardBonuses[gemType as GemType] || 0;
-      if (owned < (required || 0)) {
-        return false;
-      }
+    for (const [gemType, required] of Object.entries(noble.requirements) as [GemType, number][]) {
+      if ((cardCounts[gemType] || 0) < required) return false;
     }
 
     return true;
-  }
-
-  // 计算玩家资源（包括宝石和卡牌）
-  private static calculatePlayerResources(player: Player): Record<GemType, number> {
-    const resources: Partial<Record<GemType, number>> = { ...player.gems };
-    delete resources.gold; // 不计入黄金，因为黄金需要单独处理
-
-    // 添加卡牌提供的宝石
-    player.cards.forEach(card => {
-      resources[card.gem] = (resources[card.gem] || 0) + 1;
-    });
-
-    return resources as Record<GemType, number>;
   }
 } 
