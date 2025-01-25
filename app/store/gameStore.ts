@@ -14,6 +14,7 @@ interface GameStore {
     onConfirm: () => void;
   } | null;
   initializeGame: (players: Player[]) => void;
+  setGameState: (gameState: GameState) => void;
   performAction: (action: GameAction) => void;
   enableAI: (enable: boolean) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
@@ -47,6 +48,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
 
     set({ gameState: initialState });
+  },
+
+  setGameState: (gameState) => {
+    const currentPlayer = gameState.players.findIndex(p => p.id === gameState.currentTurn);
+
+    set({
+      gameState: {
+        ...gameState,
+        currentPlayer: currentPlayer !== -1 ? currentPlayer : 0
+      }
+    });
   },
 
   enableAI: (enable) => {

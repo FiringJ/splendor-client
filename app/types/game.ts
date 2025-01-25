@@ -53,6 +53,7 @@ export interface Player {
 export interface GameState {
   players: Player[];
   currentPlayer: number;
+  currentTurn?: string;  // 添加这个字段用于在线游戏
   gems: Record<GemType, number>;
   cards: {
     level1: Card[];

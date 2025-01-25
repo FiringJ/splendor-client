@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useSocket, useSocketStore } from '../../hooks/useSocket';
+import { useSocket } from '../../hooks/useSocket';
 import { useGameStore } from '../../store/gameStore';
+import { useRoomStore } from '../../store/roomStore';
 
 export function GameSetup() {
   const [playerCount, setPlayerCount] = useState('2');
@@ -12,8 +13,9 @@ export function GameSetup() {
   const [mode, setMode] = useState<'local' | 'online'>('local');
   const { createRoom, joinRoom, startGame } = useSocket();
   const initializeGame = useGameStore(state => state.initializeGame);
+  const setGameState = useGameStore(state => state.setGameState);
   const enableAI = useGameStore(state => state.enableAI);
-  const roomState = useSocketStore(state => state.roomState);
+  const roomState = useRoomStore(state => state.roomState);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
 
   const handleLocalGame = () => {
@@ -61,15 +63,13 @@ export function GameSetup() {
   };
 
   const handleStartOnlineGame = async () => {
-    if (!roomId) return;
     try {
       const response = await startGame(roomId);
       if (response.success && response.gameState) {
-        console.log('游戏开始');
-        initializeGame(response.gameState.players);
+        setGameState(response.gameState);
       }
     } catch (error) {
-      console.error('开始游戏失败:', error);
+      console.error('Failed to start game:', error);
     }
   };
 
