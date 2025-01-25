@@ -124,26 +124,12 @@ export const GameBoard = () => {
             <div className="w-full bg-white rounded-lg shadow-lg p-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-bold text-gray-800">宝石区域</h3>
-                {Object.keys(selectedGems).length > 0 && (
-                  <div className="flex gap-2">
-                    <button
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                      onClick={clearSelectedGems}
-                    >
-                      取消选择
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                      onClick={handleConfirmGems}
-                    >
-                      确认选择
-                    </button>
-                  </div>
-                )}
               </div>
               <GemToken
                 gems={gameState.gems}
                 disabled={loading || !isCurrentPlayer}
+                onConfirm={handleConfirmGems}
+                onCancel={clearSelectedGems}
               />
             </div>
 

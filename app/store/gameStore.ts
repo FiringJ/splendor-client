@@ -71,17 +71,8 @@ export const useGameStore = create<GameStore>((set) => ({
       const currentPlayer = state.gameState!.players.find(p => p.id === state.gameState!.currentTurn);
       if (!currentPlayer) return state;
 
-      const currentCount = state.selectedGems[gemType] || 0;
-
-      // 如果是取消选择（已经选择了这个宝石）
-      if (currentCount > 0) {
-        const newGems = { ...state.selectedGems };
-        delete newGems[gemType];
-        return { selectedGems: newGems };
-      }
-
       // 验证新的宝石选择是否有效
-      const { isValid, error } = GameValidator.validateGemSelection(
+      const { isValid, error, updatedGems } = GameValidator.validateGemSelection(
         state.gameState,
         state.selectedGems,
         gemType
@@ -92,28 +83,7 @@ export const useGameStore = create<GameStore>((set) => ({
         return state;
       }
 
-      // 添加新的宝石选择
-      const newSelectedGems = { ...state.selectedGems };
-      const currentColorCount = newSelectedGems[gemType] || 0;
-
-      // 根据当前状态决定添加一个还是两个宝石
-      if (currentColorCount === 1 && state.gameState.gems[gemType] >= 4 && Object.keys(newSelectedGems).length === 1) {
-        newSelectedGems[gemType] = 2;
-      } else {
-        newSelectedGems[gemType] = 1;
-      }
-
-      // 计算选择后的总宝石数
-      const currentGemCount = Object.values(currentPlayer.gems).reduce((sum, count) => sum + count, 0);
-      const selectedGemCount = Object.values(newSelectedGems).reduce((sum, count) => sum + count, 0);
-
-      // 检查是否超过10个宝石限制
-      if (currentGemCount + selectedGemCount > 10) {
-        set({ error: "你的宝石总数不能超过10个" });
-        return state;
-      }
-
-      return { selectedGems: newSelectedGems, error: null };
+      return { selectedGems: updatedGems, error: null };
     });
   },
 

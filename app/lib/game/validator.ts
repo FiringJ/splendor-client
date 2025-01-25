@@ -152,36 +152,61 @@ export class GameValidator {
     gameState: GameState,
     currentGems: Partial<Record<GemType, number>>,
     newGemType: GemType
-  ): { isValid: boolean; error: string | null } {
+  ): { isValid: boolean; error: string | null; updatedGems: Partial<Record<GemType, number>> } {
     // 检查当前场上该类型宝石的数量
     const availableGems = gameState.gems[newGemType] ?? 0;
 
-    // 如果场上没有足够的宝石
-    if (availableGems <= 0) {
-      return { isValid: false, error: "场上没有足够的宝石可供选择" };
-    }
-
     // 检查当前已选择的这个颜色的数量
     const currentColorCount = currentGems[newGemType] || 0;
+
+    // 创建新的宝石选择状态
+    const newSelectedGems = { ...currentGems };
 
     // 如果已经选择了一个这个颜色的宝石
     if (currentColorCount === 1) {
       // 检查是否可以选择第二个相同颜色的宝石
       if (availableGems >= 4 && Object.keys(currentGems).length === 1) {
-        return { isValid: true, error: null };
+        newSelectedGems[newGemType] = 2;
+      } else {
+        return {
+          isValid: false,
+          error: "你不能选择两个相同颜色的宝石，除非场上有4个或以上且只选择这一种颜色",
+          updatedGems: currentGems
+        };
       }
-      return {
-        isValid: false,
-        error: "你不能选择两个相同颜色的宝石，除非场上有4个或以上且只选择这一种颜色"
-      };
+    } else {
+      // 检查是否已经选择了3种不同颜色
+      if (Object.keys(currentGems).length >= 3) {
+        return {
+          isValid: false,
+          error: "你最多只能选择3种不同颜色的宝石",
+          updatedGems: currentGems
+        };
+      }
+      // 添加一个新的颜色
+      newSelectedGems[newGemType] = 1;
     }
 
-    // 检查是否已经选择了3种不同颜色
-    if (Object.keys(currentGems).length >= 3) {
-      return { isValid: false, error: "你最多只能选择3种不同颜色的宝石" };
+    // 检查玩家当前的宝石总数
+    const currentPlayer = gameState.players.find(p => p.id === gameState.currentTurn);
+    if (currentPlayer) {
+      const currentGemCount = Object.values(currentPlayer.gems).reduce((sum, count) => sum + count, 0);
+      const selectedGemCount = Object.values(newSelectedGems).reduce((sum, count) => sum + count, 0);
+
+      // 检查是否超过10个宝石限制
+      if (currentGemCount + selectedGemCount > 10) {
+        return {
+          isValid: false,
+          error: "你的宝石总数不能超过10个",
+          updatedGems: currentGems
+        };
+      }
     }
 
-    // 可以选择一个新的颜色
-    return { isValid: true, error: null };
+    return {
+      isValid: true,
+      error: null,
+      updatedGems: newSelectedGems
+    };
   }
 } 

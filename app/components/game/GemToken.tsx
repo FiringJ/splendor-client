@@ -8,6 +8,8 @@ import { useCallback } from 'react';
 interface GemTokenProps {
   gems?: Partial<Record<GemType, number>>;
   disabled?: boolean;
+  onConfirm?: () => void;
+  onCancel?: () => void;
 }
 
 const gemColorMap: Record<GemType, string> = {
@@ -28,7 +30,7 @@ const gemNameMap: Record<GemType, string> = {
   gold: '黄金',
 };
 
-export const GemToken = ({ gems = {}, disabled }: GemTokenProps) => {
+export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenProps) => {
   const selectedGems = useGameStore(state => state.selectedGems);
   const selectGem = useGameStore(state => state.selectGem);
 
@@ -43,39 +45,60 @@ export const GemToken = ({ gems = {}, disabled }: GemTokenProps) => {
     return () => debouncedFn.cancel();
   }, [disabled, selectGem]);
 
-  return (
-    <div className="flex flex-wrap gap-4 justify-center items-center p-4">
-      {(Object.keys(gemColorMap) as GemType[]).map((gemType) => {
-        const count = gems[gemType] ?? 0;
-        const selectedCount = selectedGems[gemType] ?? 0;
-        const remainingCount = count - selectedCount;
-        const isSelected = selectedCount > 0;
+  const hasSelectedGems = Object.values(selectedGems).some(count => count > 0);
 
-        return (
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-4 justify-center items-center p-4">
+        {(Object.keys(gemColorMap) as GemType[]).map((gemType) => {
+          const count = gems[gemType] ?? 0;
+          const selectedCount = selectedGems[gemType] ?? 0;
+          const remainingCount = count - selectedCount;
+          const isSelected = selectedCount > 0;
+
+          return (
+            <button
+              key={gemType}
+              className={`
+                relative w-20 h-20 rounded-full
+                ${gemColorMap[gemType]}
+                ${remainingCount > 0 && !disabled ? 'cursor-pointer hover:opacity-80' : 'opacity-50 cursor-not-allowed'}
+                ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-2' : ''}
+                transition-all duration-200
+                flex items-center justify-center
+                shadow-lg
+              `}
+              onClick={() => handleGemClick(gemType)}
+              disabled={remainingCount === 0 || disabled}
+              title={`${gemNameMap[gemType]} (剩余: ${remainingCount}, 已选: ${selectedCount})`}
+            >
+              <span className="text-2xl">{remainingCount}</span>
+              {isSelected && (
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold">
+                  {selectedCount}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {hasSelectedGems && (
+        <div className="flex justify-center gap-2">
           <button
-            key={gemType}
-            className={`
-              relative w-20 h-20 rounded-full
-              ${gemColorMap[gemType]}
-              ${remainingCount > 0 && !disabled ? 'cursor-pointer hover:opacity-80' : 'opacity-50 cursor-not-allowed'}
-              ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-2' : ''}
-              transition-all duration-200
-              flex items-center justify-center
-              shadow-lg
-            `}
-            onClick={() => handleGemClick(gemType)}
-            disabled={remainingCount === 0 || disabled}
-            title={`${gemNameMap[gemType]} (剩余: ${remainingCount}, 已选: ${selectedCount})`}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            onClick={onCancel}
           >
-            <span className="text-2xl">{remainingCount}</span>
-            {isSelected && (
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold">
-                {selectedCount}
-              </div>
-            )}
+            取消选择
           </button>
-        );
-      })}
+          <button
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+            onClick={onConfirm}
+          >
+            确认选择
+          </button>
+        </div>
+      )}
     </div>
   );
 }; 
