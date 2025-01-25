@@ -47,6 +47,7 @@ export const useSocket = () => {
       socketRef.current.emit('createRoom', { playerId }, (response: CreateRoomResponse) => {
         if (response.roomId) {
           setRoomId(response.roomId);
+          setRoomState(response.room);
           resolve(response.roomId);
         } else {
           reject(new Error('Failed to create room'));
@@ -64,7 +65,9 @@ export const useSocket = () => {
       }
 
       socketRef.current.emit('joinRoom', { roomId, playerId }, (response: JoinRoomResponse) => {
-        if (response.success) {
+        if (response.success && response.room) {
+          setRoomId(roomId);
+          setRoomState(response.room);
           resolve(response);
         } else {
           reject(new Error(response.error || 'Failed to join room'));
