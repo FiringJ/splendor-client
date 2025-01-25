@@ -91,7 +91,6 @@ export interface Player {
 
 export interface GameState {
   players: Map<string, Player>;
-  currentPlayer: Player | null;
   currentTurn: string | null;
   gems: Record<GemType, number>;
   cards: {

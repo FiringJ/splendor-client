@@ -1,31 +1,33 @@
 'use client';
 
-import type { GameState, GameAction, Card, Noble, GemType } from '../../types/game';
+import type { GameState, GameAction, Card, Noble, GemType, Player } from '../../types/game';
 
 export class GameValidator {
   static canPurchaseCard(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'PURCHASE_CARD') return false;
-    if (!gameState.currentPlayer) return false;
+    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
-    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+    if (currentPlayer.id !== gameState.currentTurn) return false;
 
     const { cardId, level } = action.payload;
     const card = this.findCard(gameState, cardId, level);
     if (!card) return false;
 
-    return this.hasEnoughResources(gameState.currentPlayer, card);
+    return this.hasEnoughResources(currentPlayer, card);
   }
 
   static canReserveCard(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'RESERVE_CARD') return false;
-    if (!gameState.currentPlayer) return false;
+    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
-    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+    if (currentPlayer.id !== gameState.currentTurn) return false;
 
     // 检查预留卡数量限制
-    if (gameState.currentPlayer.reservedCards.length >= 3) return false;
+    if (currentPlayer.reservedCards.length >= 3) return false;
 
     const { cardId, level } = action.payload;
     // 如果是从牌堆预定
@@ -43,17 +45,18 @@ export class GameValidator {
 
   static canTakeGems(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'TAKE_GEMS') return false;
-    if (!gameState.currentPlayer) return false;
+    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
-    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+    if (currentPlayer.id !== gameState.currentTurn) return false;
 
     const { gems } = action.payload;
     const selectedCount = Object.values(gems).reduce((sum, count) => sum + count, 0);
     if (selectedCount === 0) return false;
 
     // 检查玩家宝石总数是否会超过10个
-    const currentGemCount = Object.values(gameState.currentPlayer.gems).reduce((sum, count) => sum + count, 0);
+    const currentGemCount = Object.values(currentPlayer.gems).reduce((sum, count) => sum + count, 0);
     if (currentGemCount + selectedCount > 10) return false;
 
     // 检查是否有足够的宝石可以拿
@@ -79,16 +82,17 @@ export class GameValidator {
 
   static canClaimNoble(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'CLAIM_NOBLE') return false;
-    if (!gameState.currentPlayer) return false;
+    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
-    if (gameState.currentPlayer.id !== gameState.currentTurn) return false;
+    if (currentPlayer.id !== gameState.currentTurn) return false;
 
     const { nobleId } = action.payload;
     const noble = gameState.nobles.find(n => n.id === nobleId);
     if (!noble) return false;
 
-    return this.meetsNobleRequirements(gameState.currentPlayer, noble);
+    return this.meetsNobleRequirements(currentPlayer, noble);
   }
 
   private static findCard(gameState: GameState, cardId: string, level: number): Card | undefined {
@@ -99,10 +103,8 @@ export class GameValidator {
     return cards.find(card => card.id === cardId);
   }
 
-  private static hasEnoughResources(player: GameState['currentPlayer'], card: Card): boolean {
-    if (!player) return false;
-
-    const cardCounts = player.cards.reduce((counts, card) => {
+  private static hasEnoughResources(player: Player, card: Card): boolean {
+    const cardCounts = player.cards.reduce((counts: Record<GemType, number>, card: Card) => {
       counts[card.gem] = (counts[card.gem] || 0) + 1;
       return counts;
     }, {} as Record<GemType, number>);
@@ -119,10 +121,8 @@ export class GameValidator {
     return true;
   }
 
-  private static meetsNobleRequirements(player: GameState['currentPlayer'], noble: Noble): boolean {
-    if (!player) return false;
-
-    const cardCounts = player.cards.reduce((counts, card) => {
+  private static meetsNobleRequirements(player: Player, noble: Noble): boolean {
+    const cardCounts = player.cards.reduce((counts: Record<GemType, number>, card: Card) => {
       counts[card.gem] = (counts[card.gem] || 0) + 1;
       return counts;
     }, {} as Record<GemType, number>);

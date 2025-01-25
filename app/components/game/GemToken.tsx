@@ -1,11 +1,12 @@
 'use client';
 
 import { GemType } from '../../types/game';
+import { useGameStore } from '../../store/gameStore';
 import { debounce } from 'lodash';
+import { useCallback } from 'react';
 
 interface GemTokenProps {
   gems?: Partial<Record<GemType, number>>;
-  onSelect?: (gemType: GemType) => void;
   disabled?: boolean;
 }
 
@@ -27,33 +28,51 @@ const gemNameMap: Record<GemType, string> = {
   gold: '黄金',
 };
 
-export const GemToken = ({ gems = {}, onSelect, disabled }: GemTokenProps) => {
-  const debouncedGemClick = debounce((gemType: GemType) => {
-    if (onSelect && !disabled) {
-      onSelect(gemType);
-    }
-  }, 300);
+export const GemToken = ({ gems = {}, disabled }: GemTokenProps) => {
+  const selectedGems = useGameStore(state => state.selectedGems);
+  const selectGem = useGameStore(state => state.selectGem);
+
+  // 使用 useCallback 包装防抖函数，避免重复创建
+  const handleGemClick = useCallback((gemType: GemType) => {
+    const debouncedFn = debounce(() => {
+      if (!disabled) {
+        selectGem(gemType);
+      }
+    }, 20);
+    debouncedFn();
+    return () => debouncedFn.cancel();
+  }, [disabled, selectGem]);
 
   return (
     <div className="flex flex-wrap gap-4 justify-center items-center p-4">
       {(Object.keys(gemColorMap) as GemType[]).map((gemType) => {
         const count = gems[gemType] ?? 0;
+        const selectedCount = selectedGems[gemType] ?? 0;
+        const remainingCount = count - selectedCount;
+        const isSelected = selectedCount > 0;
+
         return (
           <button
             key={gemType}
             className={`
               relative w-20 h-20 rounded-full
               ${gemColorMap[gemType]}
-              ${count > 0 && !disabled ? 'cursor-pointer hover:opacity-80' : 'opacity-50 cursor-not-allowed'}
+              ${remainingCount > 0 && !disabled ? 'cursor-pointer hover:opacity-80' : 'opacity-50 cursor-not-allowed'}
+              ${isSelected ? 'ring-4 ring-yellow-400 ring-offset-2' : ''}
               transition-all duration-200
               flex items-center justify-center
               shadow-lg
             `}
-            onClick={() => debouncedGemClick(gemType)}
-            disabled={count === 0 || disabled}
-            title={`${gemNameMap[gemType]} (${count})`}
+            onClick={() => handleGemClick(gemType)}
+            disabled={remainingCount === 0 || disabled}
+            title={`${gemNameMap[gemType]} (剩余: ${remainingCount}, 已选: ${selectedCount})`}
           >
-            <span className="text-2xl">{count}</span>
+            <span className="text-2xl">{remainingCount}</span>
+            {isSelected && (
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold">
+                {selectedCount}
+              </div>
+            )}
           </button>
         );
       })}

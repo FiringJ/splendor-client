@@ -22,6 +22,8 @@ export const GameBoard = () => {
   const error = useGameStore(state => state.error);
   const loading = useGameStore(state => state.loading);
   const confirmDialog = useGameStore(state => state.confirmDialog);
+  const selectedGems = useGameStore(state => state.selectedGems);
+  const clearSelectedGems = useGameStore(state => state.clearSelectedGems);
   const roomId = useRoomStore(state => state.roomId);
   const playerId = useUserStore(state => state.playerId);
   const { performGameAction } = useSocket();
@@ -39,13 +41,17 @@ export const GameBoard = () => {
 
   const isCurrentPlayer = playerId === gameState.currentTurn;
 
-  const handleGemSelect = (gemType: GemType) => {
+  const handleConfirmGems = () => {
+    const totalSelected = Object.values(selectedGems).reduce((a, b) => a + b, 0);
+    if (totalSelected === 0) return;
+
     handleAction({
       type: 'TAKE_GEMS',
       payload: {
-        gems: { [gemType]: 1 } as Record<GemType, number>
+        gems: selectedGems as Record<GemType, number>
       }
     });
+    clearSelectedGems();
   };
 
   return (
@@ -116,10 +122,27 @@ export const GameBoard = () => {
           {/* 右侧：宝石和玩家信息 */}
           <div className="flex flex-col gap-4 w-full">
             <div className="w-full bg-white rounded-lg shadow-lg p-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">宝石区域</h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-bold text-gray-800">宝石区域</h3>
+                {Object.keys(selectedGems).length > 0 && (
+                  <div className="flex gap-2">
+                    <button
+                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      onClick={clearSelectedGems}
+                    >
+                      取消选择
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                      onClick={handleConfirmGems}
+                    >
+                      确认选择
+                    </button>
+                  </div>
+                )}
+              </div>
               <GemToken
                 gems={gameState.gems}
-                onSelect={handleGemSelect}
                 disabled={loading || !isCurrentPlayer}
               />
             </div>
