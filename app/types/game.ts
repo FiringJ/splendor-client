@@ -90,7 +90,7 @@ export interface Player {
 }
 
 export interface GameState {
-  players: Map<string, Player>;
+  players: Array<Player>;
   currentTurn: string | null;
   gems: Record<GemType, number>;
   cards: {

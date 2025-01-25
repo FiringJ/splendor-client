@@ -68,7 +68,7 @@ export const useGameStore = create<GameStore>((set) => ({
     set((state) => {
       if (!state.gameState) return state;
 
-      const currentPlayer = state.gameState.players.get(state.gameState.currentTurn || '');
+      const currentPlayer = state.gameState!.players.find(p => p.id === state.gameState!.currentTurn);
       if (!currentPlayer) return state;
 
       const currentCount = state.selectedGems[gemType] || 0;
@@ -80,14 +80,26 @@ export const useGameStore = create<GameStore>((set) => ({
         return { selectedGems: newGems };
       }
 
-      // 尝试添加新的宝石选择
-      const newSelectedGems = { ...state.selectedGems };
+      // 验证新的宝石选择是否有效
+      const { isValid, error } = GameValidator.validateGemSelection(
+        state.gameState,
+        state.selectedGems,
+        gemType
+      );
 
-      // 检查是否可以选择两个相同颜色的宝石
-      if (state.gameState.gems[gemType] >= 4 && Object.keys(newSelectedGems).length === 0) {
+      if (!isValid) {
+        set({ error });
+        return state;
+      }
+
+      // 添加新的宝石选择
+      const newSelectedGems = { ...state.selectedGems };
+      const currentColorCount = newSelectedGems[gemType] || 0;
+
+      // 根据当前状态决定添加一个还是两个宝石
+      if (currentColorCount === 1 && state.gameState.gems[gemType] >= 4 && Object.keys(newSelectedGems).length === 1) {
         newSelectedGems[gemType] = 2;
       } else {
-        // 选择一个新的宝石
         newSelectedGems[gemType] = 1;
       }
 
@@ -98,30 +110,6 @@ export const useGameStore = create<GameStore>((set) => ({
       // 检查是否超过10个宝石限制
       if (currentGemCount + selectedGemCount > 10) {
         set({ error: "你的宝石总数不能超过10个" });
-        return state;
-      }
-
-      // 使用 validator 验证选择是否有效
-      const isValid = GameValidator.canTakeGems(state.gameState, {
-        type: 'TAKE_GEMS',
-        payload: {
-          gems: Object.fromEntries(
-            ['diamond', 'sapphire', 'emerald', 'ruby', 'onyx', 'gold'].map(
-              gem => [gem, newSelectedGems[gem as GemType] || 0]
-            )
-          ) as Record<GemType, number>
-        }
-      });
-
-      if (!isValid) {
-        const differentColors = Object.keys(newSelectedGems).length;
-        if (differentColors > 3) {
-          set({ error: "你最多只能选择3种不同颜色的宝石" });
-        } else if (Object.values(newSelectedGems).some(count => count > 2)) {
-          set({ error: "你最多只能选择2个相同颜色的宝石" });
-        } else {
-          set({ error: "无效的宝石选择" });
-        }
         return state;
       }
 

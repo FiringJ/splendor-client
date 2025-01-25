@@ -5,7 +5,7 @@ import type { GameState, GameAction, Card, Noble, GemType, Player } from '../../
 export class GameValidator {
   static canPurchaseCard(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'PURCHASE_CARD') return false;
-    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    const currentPlayer = gameState.players.find((p: Player) => p.id === gameState.currentTurn);
     if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
@@ -20,7 +20,7 @@ export class GameValidator {
 
   static canReserveCard(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'RESERVE_CARD') return false;
-    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    const currentPlayer = gameState.players.find((p: Player) => p.id === gameState.currentTurn);
     if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
@@ -45,18 +45,15 @@ export class GameValidator {
 
   static canTakeGems(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'TAKE_GEMS') return false;
-    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    const currentPlayer = gameState.players.find((p: Player) => p.id === gameState.currentTurn);
     if (!currentPlayer) return false;
 
-    // 检查是否是当前玩家的回合
-    if (currentPlayer.id !== gameState.currentTurn) return false;
-
     const { gems } = action.payload;
-    const selectedCount = Object.values(gems).reduce((sum, count) => sum + count, 0);
+    const selectedCount = Object.values(gems).reduce((sum: number, count: number) => sum + count, 0);
     if (selectedCount === 0) return false;
 
     // 检查玩家宝石总数是否会超过10个
-    const currentGemCount = Object.values(currentPlayer.gems).reduce((sum, count) => sum + count, 0);
+    const currentGemCount = Object.values(currentPlayer.gems).reduce((sum: number, count: number) => sum + count, 0);
     if (currentGemCount + selectedCount > 10) return false;
 
     // 检查是否有足够的宝石可以拿
@@ -64,25 +61,35 @@ export class GameValidator {
       if (count > 0 && (gameState.gems[type] ?? 0) < count) return false;
     }
 
-    // 检查选择的宝石是否符合规则
-    const differentColors = Object.entries(gems).filter(([, count]) => count > 0).length;
-    const maxCount = Math.max(...Object.values(gems));
+    // 获取选择的不同颜色数量
+    const selectedColors = Object.entries(gems).filter(([, count]) => count > 0);
+    const differentColors = selectedColors.length;
 
-    // 规则1：可以拿3个不同颜色的宝石
-    if (differentColors === 3 && maxCount === 1) return true;
+    // 检查是否符合规则
+    if (differentColors === 0) return false;
+    if (differentColors > 3) return false;
 
-    // 规则2：可以拿2个相同颜色的宝石（当该颜色宝石数量大于等于4个时）
-    if (differentColors === 1 && maxCount === 2) {
-      const [gemType] = Object.entries(gems).find(([, count]) => count === 2) || [];
-      if (gemType && (gameState.gems[gemType as GemType] ?? 0) >= 4) return true;
+    // 如果只选择了一种颜色
+    if (differentColors === 1) {
+      const [gemType, count] = selectedColors[0];
+      // 选择两个相同颜色的条件：场上必须有4个或以上
+      if (count === 2) {
+        return (gameState.gems[gemType as GemType] ?? 0) >= 4;
+      }
+      // 选择一个的情况总是允许的（如果有足够的宝石）
+      return count === 1;
     }
 
-    return false;
+    // 如果选择了多种颜色
+    // 1. 每种颜色只能选择一个
+    if (selectedColors.some(([, count]) => count > 1)) return false;
+    // 2. 最多选择三种不同颜色
+    return differentColors <= 3;
   }
 
   static canClaimNoble(gameState: GameState, action: GameAction): boolean {
     if (action.type !== 'CLAIM_NOBLE') return false;
-    const currentPlayer = gameState.players.get(gameState.currentTurn || '');
+    const currentPlayer = gameState.players.find((p: Player) => p.id === gameState.currentTurn);
     if (!currentPlayer) return false;
 
     // 检查是否是当前玩家的回合
@@ -132,5 +139,49 @@ export class GameValidator {
     }
 
     return true;
+  }
+
+  /**
+   * 检查新增一个宝石选择是否有效
+   * @param gameState 当前游戏状态
+   * @param currentGems 当前已选择的宝石
+   * @param newGemType 新要选择的宝石类型
+   * @returns 包含验证结果和错误信息的对象
+   */
+  static validateGemSelection(
+    gameState: GameState,
+    currentGems: Partial<Record<GemType, number>>,
+    newGemType: GemType
+  ): { isValid: boolean; error: string | null } {
+    // 检查当前场上该类型宝石的数量
+    const availableGems = gameState.gems[newGemType] ?? 0;
+
+    // 如果场上没有足够的宝石
+    if (availableGems <= 0) {
+      return { isValid: false, error: "场上没有足够的宝石可供选择" };
+    }
+
+    // 检查当前已选择的这个颜色的数量
+    const currentColorCount = currentGems[newGemType] || 0;
+
+    // 如果已经选择了一个这个颜色的宝石
+    if (currentColorCount === 1) {
+      // 检查是否可以选择第二个相同颜色的宝石
+      if (availableGems >= 4 && Object.keys(currentGems).length === 1) {
+        return { isValid: true, error: null };
+      }
+      return {
+        isValid: false,
+        error: "你不能选择两个相同颜色的宝石，除非场上有4个或以上且只选择这一种颜色"
+      };
+    }
+
+    // 检查是否已经选择了3种不同颜色
+    if (Object.keys(currentGems).length >= 3) {
+      return { isValid: false, error: "你最多只能选择3种不同颜色的宝石" };
+    }
+
+    // 可以选择一个新的颜色
+    return { isValid: true, error: null };
   }
 } 
