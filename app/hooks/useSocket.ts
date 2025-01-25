@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useGameStore } from '../store/gameStore';
+import { useUserStore } from '../store/userStore';
 import { GameState, GameAction } from '../types/game';
 import { useRoomStore } from '../store/roomStore';
 import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse } from '../types/socket';
@@ -9,6 +10,7 @@ export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
   const { setRoomId, setRoomState } = useRoomStore();
   const { setGameState, setError, setLoading } = useGameStore();
+  const { setPlayer } = useUserStore();
 
   useEffect(() => {
     if (!socketRef.current) {
@@ -91,6 +93,7 @@ export const useSocket = () => {
           if (response.roomId) {
             setRoomId(response.roomId);
             setRoomState(response.room);
+            setPlayer(playerId, 'Player 1');
             resolve(response.roomId);
           } else {
             reject(new Error('Failed to create room'));
@@ -118,6 +121,8 @@ export const useSocket = () => {
           if (response.success && response.room) {
             setRoomId(roomId);
             setRoomState(response.room);
+            const playerNumber = response.room.players.length;
+            setPlayer(playerId, `Player ${playerNumber}`);
             resolve(response);
           } else {
             reject(new Error(response.error || 'Failed to join room'));

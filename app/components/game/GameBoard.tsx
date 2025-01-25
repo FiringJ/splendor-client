@@ -2,6 +2,7 @@
 
 import { useGameStore } from '../../store/gameStore';
 import { useRoomStore } from '../../store/roomStore';
+import { useUserStore } from '../../store/userStore';
 import { useSocket } from '../../hooks/useSocket';
 import type { Player, GameAction, GemType } from '../../types/game';
 import { NobleDisplay } from './NobleDisplay';
@@ -14,7 +15,7 @@ import { AIControl } from './AIControl';
 import { GameOverDialog } from './GameOverDialog';
 import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
-import { GameTester } from './GameTester';
+// import { GameTester } from './GameTester';
 
 export const GameBoard = () => {
   const gameState = useGameStore(state => state.gameState);
@@ -22,6 +23,7 @@ export const GameBoard = () => {
   const loading = useGameStore(state => state.loading);
   const confirmDialog = useGameStore(state => state.confirmDialog);
   const roomId = useRoomStore(state => state.roomId);
+  const playerId = useUserStore(state => state.playerId);
   const { performGameAction } = useSocket();
 
   if (!gameState) return null;
@@ -35,7 +37,7 @@ export const GameBoard = () => {
     }
   };
 
-  const isCurrentPlayer = gameState.currentPlayer?.id === gameState.currentTurn;
+  const isCurrentPlayer = playerId === gameState.currentTurn;
 
   const handleGemSelect = (gemType: GemType) => {
     handleAction({
@@ -138,7 +140,7 @@ export const GameBoard = () => {
         </div>
 
         {/* 游戏测试工具 */}
-        {process.env.NODE_ENV === 'development' && <GameTester />}
+        {/* {process.env.NODE_ENV === 'development' && <GameTester />} */}
       </div>
     </div>
   );
