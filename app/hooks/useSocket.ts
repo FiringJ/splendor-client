@@ -4,7 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { useUserStore } from '../store/userStore';
 import { GameState, GameAction } from '../types/game';
 import { useRoomStore } from '../store/roomStore';
-import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse } from '../types/socket';
+import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse, GameStartedEvent } from '../types/socket';
 
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
@@ -18,49 +18,122 @@ export const useSocket = () => {
         withCredentials: true,
         reconnection: true,
         reconnectionAttempts: 5,
-        reconnectionDelay: 1000
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 10000,
+        timeout: 30000,
+        transports: ['websocket'],
+        forceNew: false,
+        autoConnect: true
       });
+
+      const socket = socketRef.current;
 
       // 监听连接事件
-      socketRef.current.on('connect', () => {
-        console.log('Connected to server');
+      socket.on('connect', () => {
+        console.log('Connected to server with ID:', socket.id);
+        setError(null);
+
+        // 重新加入房间（如果有）
+        const roomId = useRoomStore.getState().roomId;
+        const playerId = useUserStore.getState().playerId;
+        if (roomId && playerId) {
+          console.log('Rejoining room after reconnect:', { roomId, playerId });
+          socket.emit('joinRoom', { roomId, playerId }, (response: { success: boolean; room?: RoomState; error?: string }) => {
+            if (response.success && response.room) {
+              console.log('Successfully rejoined room:', response.room);
+              setRoomState(response.room);
+              if (response.room.gameState) {
+                setGameState(response.room.gameState);
+              }
+            } else {
+              console.error('Failed to rejoin room:', response.error);
+              setError('重新加入房间失败，请刷新页面重试');
+            }
+          });
+        }
       });
 
-      socketRef.current.on('connect_error', (error) => {
+      socket.on('disconnect', (reason) => {
+        console.log('Disconnected from server, reason:', reason);
+        if (reason === 'io server disconnect' || reason === 'io client disconnect') {
+          console.log('Attempting to reconnect...');
+          socket.connect();
+        } else {
+          // 对于其他断开原因，也尝试重连
+          setTimeout(() => {
+            if (!socket.connected) {
+              console.log('Still disconnected, attempting to reconnect...');
+              socket.connect();
+            }
+          }, 1000);
+        }
+        setError('与服务器的连接已断开，正在尝试重新连接...');
+      });
+
+      socket.on('connect_error', (error) => {
         console.error('Connection error:', error);
         setError('连接服务器失败，请检查网络连接');
       });
 
-      socketRef.current.on('reconnect', (attemptNumber) => {
+      socket.on('reconnect', (attemptNumber) => {
         console.log('Reconnected on attempt:', attemptNumber);
         setError(null);
       });
 
-      socketRef.current.on('reconnect_failed', () => {
+      socket.on('reconnect_attempt', (attemptNumber) => {
+        console.log('Attempting to reconnect:', attemptNumber);
+        // 尝试先使用polling，然后升级到websocket
+        socket.io.opts.transports = ['polling', 'websocket'];
+      });
+
+      socket.on('reconnect_error', (error) => {
+        console.error('Reconnection error:', error);
+      });
+
+      socket.on('reconnect_failed', () => {
+        console.error('Failed to reconnect');
         setError('重连失败，请刷新页面重试');
       });
 
       // 监听房间更新
-      socketRef.current.on('roomUpdate', (roomState: RoomState) => {
+      socket.on('roomUpdate', (roomState: RoomState) => {
+        console.log('Room updated:', roomState);
         setRoomState(roomState);
       });
 
       // 监听游戏开始
-      socketRef.current.on('gameStarted', (data: { gameState: GameState; status: string }) => {
-        if (data.gameState) {
+      socket.on('gameStarted', (data: GameStartedEvent) => {
+        try {
+          console.log('Received gameStarted event:', data);
+          if (!data || !data.gameState || !data.room) {
+            console.error('Invalid gameStarted data received:', data);
+            return;
+          }
+
+          // 先更新房间状态
+          setRoomState(data.room);
+
+          // 再更新游戏状态
           setGameState(data.gameState);
+
+          console.log('Game started successfully, all states updated');
+        } catch (error: unknown) {
+          console.error('Error handling gameStarted event:', error);
+          setError('游戏开始时出现错误，请刷新页面重试');
         }
       });
 
       // 监听游戏状态更新
-      socketRef.current.on('gameStateUpdate', (data: { gameState: GameState; status: string }) => {
+      socket.on('gameStateUpdate', (data: { gameState: GameState; status: string }) => {
+        console.log('Game state updated:', data);
         if (data.gameState) {
           setGameState(data.gameState);
         }
       });
 
       // 监听错误消息
-      socketRef.current.on('error', (error: string) => {
+      socket.on('error', (error: string) => {
+        console.error('Socket error:', error);
         setError(error);
       });
     }
@@ -70,6 +143,7 @@ export const useSocket = () => {
         socketRef.current.off('connect');
         socketRef.current.off('connect_error');
         socketRef.current.off('reconnect');
+        socketRef.current.off('reconnect_attempt');
         socketRef.current.off('reconnect_failed');
         socketRef.current.off('roomUpdate');
         socketRef.current.off('gameStarted');
@@ -171,11 +245,20 @@ export const useSocket = () => {
       }
 
       return new Promise<void>((resolve, reject) => {
-        socketRef.current!.emit('gameAction', { roomId, action }, (response: { success: boolean; error?: string }) => {
+        console.log('performGameAction', action);
+
+        socketRef.current!.emit('gameAction', { roomId, action }, (response: { success: boolean; error?: string; code?: string; data?: any }) => {
           if (response.success) {
             resolve();
           } else {
-            reject(new Error(response.error || 'Failed to perform action'));
+            // 处理特殊错误
+            if (response.code === 'GEMS_OVERFLOW') {
+              const { currentTotal, playerId } = response.data;
+              useGameStore.getState().showGemsToDiscard(currentTotal, playerId);
+              resolve();
+            } else {
+              reject(new Error(response.error || 'Failed to perform action'));
+            }
           }
         });
       });

@@ -8,6 +8,11 @@ interface GameStore {
   error: string | null;
   loading: boolean;
   selectedGems: Partial<Record<GemType, number>>;
+  gemsToDiscard: {
+    isOpen: boolean;
+    currentTotal: number;
+    playerId: string;
+  } | null;
   confirmDialog: {
     isOpen: boolean;
     title: string;
@@ -22,6 +27,8 @@ interface GameStore {
   hideConfirm: () => void;
   selectGem: (gemType: GemType) => void;
   clearSelectedGems: () => void;
+  showGemsToDiscard: (currentTotal: number, playerId: string) => void;
+  hideGemsToDiscard: () => void;
   reset: () => void;
 }
 
@@ -31,6 +38,7 @@ export const useGameStore = create<GameStore>((set) => ({
   error: null,
   loading: false,
   selectedGems: {},
+  gemsToDiscard: null,
   confirmDialog: null,
 
   setGameState: (gameState) => {
@@ -91,12 +99,27 @@ export const useGameStore = create<GameStore>((set) => ({
     set({ selectedGems: {} });
   },
 
+  showGemsToDiscard: (currentTotal: number, playerId: string) => {
+    set({
+      gemsToDiscard: {
+        isOpen: true,
+        currentTotal,
+        playerId
+      }
+    });
+  },
+
+  hideGemsToDiscard: () => {
+    set({ gemsToDiscard: null });
+  },
+
   reset: () => {
     set({
       gameState: null,
       error: null,
       loading: false,
       selectedGems: {},
+      gemsToDiscard: null,
       confirmDialog: null
     });
   }
