@@ -1,10 +1,6 @@
-interface ConfirmDialogProps {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-}
+'use client';
+
+import type { ConfirmDialogProps } from '../../types/components';
 
 export const ConfirmDialog = ({
   isOpen,

@@ -1,41 +1,55 @@
 'use client';
 
-import { Player, GemType, Card as CardType } from '../../types/game';
+import type { PlayerPanelProps } from '../../types/components';
+import { GemType, Card as CardType } from '../../types/game';
 import { Card } from './Card';
 import { Noble } from './Noble';
 import { useGameStore } from '../../store/gameStore';
-
-interface PlayerPanelProps {
-  player: Player;
-  isActive: boolean;
-}
+import { useSocket } from '../../hooks/useSocket';
+import { useRoomStore } from '../../store/roomStore';
+import { GameValidator } from '../../lib/game/validator';
 
 const gemColors: Record<GemType, string> = {
-  diamond: 'text-gray-700 bg-white border-2 border-gray-300',
-  sapphire: 'text-white bg-blue-500',
-  emerald: 'text-white bg-green-500',
-  ruby: 'text-white bg-red-500',
-  onyx: 'text-white bg-gray-800',
-  gold: 'text-black bg-yellow-400'
+  red: 'text-white bg-red-500',
+  green: 'text-white bg-green-500',
+  blue: 'text-white bg-blue-500',
+  white: 'text-gray-700 bg-white border-2 border-gray-300',
+  black: 'text-white bg-gray-800',
+  gold: 'text-black bg-yellow-400',
+};
+
+const gemNames: Record<GemType, string> = {
+  red: '红宝石',
+  green: '祖母绿',
+  blue: '蓝宝石',
+  white: '钻石',
+  black: '玛瑙',
+  gold: '黄金',
 };
 
 export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
-  const { performAction } = useGameStore();
+  const gameState = useGameStore(state => state.gameState);
+  const roomId = useRoomStore(state => state.roomId);
+  const { performGameAction } = useSocket();
 
-  const handlePurchaseReservedCard = (card: CardType) => {
-    performAction({
-      type: 'purchaseCard',
-      playerId: player.id,
-      playerName: player.name,
-      timestamp: Date.now(),
-      details: {
-        card: {
-          id: card.id,
-          gem: card.gem,
-          points: card.points
-        }
+  const handlePurchaseReservedCard = async (card: CardType) => {
+    if (!gameState || !roomId) return;
+
+    const action = {
+      type: 'PURCHASE_CARD' as const,
+      payload: {
+        cardId: card.id,
+        level: card.level,
+      },
+    };
+
+    if (GameValidator.canPurchaseCard(gameState, action)) {
+      try {
+        await performGameAction(roomId, action);
+      } catch (error) {
+        console.error('Failed to purchase reserved card:', error);
       }
-    });
+    }
   };
 
   return (
@@ -62,7 +76,7 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
         </div>
         <div className="flex gap-2.5">
           {/* 普通宝石组 */}
-          {(['diamond', 'sapphire', 'emerald', 'ruby', 'onyx'] as const).map((gemType) => (
+          {(['white', 'blue', 'green', 'red', 'black'] as const).map((gemType) => (
             <div key={gemType} className="flex gap-1">
               <div className={`w-6 h-6 ${gemColors[gemType]} 
                             flex items-center justify-center text-sm font-bold shadow-sm select-none`}>
@@ -96,19 +110,25 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
                   card={card}
                   disabled={!isActive}
                 />
-                {isActive && (
-                  <button
-                    onClick={() => handlePurchaseReservedCard(card)}
-                    className="absolute -bottom-4 left-1/2 -translate-x-1/2 
+                {isActive && GameValidator.canPurchaseCard(gameState!, {
+                  type: 'PURCHASE_CARD',
+                  payload: {
+                    cardId: card.id,
+                    level: card.level,
+                  },
+                }) && (
+                    <button
+                      onClick={() => handlePurchaseReservedCard(card)}
+                      className="absolute -bottom-4 left-1/2 -translate-x-1/2 
                               px-4 py-1 bg-blue-500 text-white text-sm rounded-lg
                               shadow-md shadow-blue-500/30
                               hover:bg-blue-600 hover:shadow-blue-600/30
                               active:transform active:scale-95
                               transition-all duration-200"
-                  >
-                    购买
-                  </button>
-                )}
+                    >
+                      购买
+                    </button>
+                  )}
               </div>
             ))}
           </div>

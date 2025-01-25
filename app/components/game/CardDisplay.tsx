@@ -1,148 +1,109 @@
 'use client';
 
-import { Card as CardType } from '../../types/game';
+import type { CardDisplayProps } from '../../types/components';
 import { Card } from './Card';
 import { useGameStore } from '../../store/gameStore';
-import { useState } from 'react';
+import { GameValidator } from '../../lib/game/validator';
 
-interface CardDisplayProps {
-  cards: {
-    level1: CardType[];
-    level2: CardType[];
-    level3: CardType[];
-  };
-}
-
-export const CardDisplay = ({ cards }: CardDisplayProps) => {
+export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisplayProps) => {
   const gameState = useGameStore(state => state.gameState);
-  const performAction = useGameStore(state => state.performAction);
-  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
-  const handleCardClick = (card: CardType) => {
-    if (selectedCard?.id === card.id) {
-      setSelectedCard(null);
-    } else {
-      setSelectedCard(card);
+  const handleCardClick = (cardId: string, level: number) => {
+    if (!gameState || disabled) return;
+
+    const action = {
+      type: 'PURCHASE_CARD' as const,
+      payload: {
+        cardId,
+        level,
+      },
+    };
+
+    if (GameValidator.canPurchaseCard(gameState, action)) {
+      onPurchase(action);
     }
   };
 
-  // 点击背景时取消选中
-  const handleBackgroundClick = () => {
-    setSelectedCard(null);
-  };
+  const handleCardReserve = (cardId: string, level: number) => {
+    if (!gameState || disabled) return;
 
-  const handlePurchaseCard = (card: CardType) => {
-    if (!gameState) return;
-
-    const currentPlayer = gameState.players[gameState.currentPlayer];
-    performAction({
-      type: 'purchaseCard',
-      playerId: currentPlayer.id,
-      playerName: currentPlayer.name,
-      details: {
-        card: {
-          id: card.id,
-          gem: card.gem,
-          points: card.points
-        }
+    const action = {
+      type: 'RESERVE_CARD' as const,
+      payload: {
+        cardId,
+        level,
       },
-      timestamp: Date.now()
-    });
-    setSelectedCard(null);
+    };
+
+    if (GameValidator.canReserveCard(gameState, action)) {
+      onReserve(action);
+    }
   };
-
-  const handleReserveCard = (card: CardType) => {
-    if (!gameState) return;
-
-    const currentPlayer = gameState.players[gameState.currentPlayer];
-    performAction({
-      type: 'reserveCard',
-      playerId: currentPlayer.id,
-      playerName: currentPlayer.name,
-      details: {
-        card: {
-          id: card.id,
-          gem: card.gem,
-          points: card.points
-        },
-        gems: gameState.gems.gold > 0 ? { gold: 1 } : undefined
-      },
-      timestamp: Date.now()
-    });
-    setSelectedCard(null);
-  };
-
-  if (!gameState) return null;
 
   return (
-    <div className="flex flex-col gap-4" onClick={handleBackgroundClick}>
-      {/* 三级卡牌 */}
-      <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
-        {/* 三级卡牌剩余数量 */}
-        <div className="w-16 h-44 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 
-                    border-2 border-blue-300 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-blue-600">{gameState.cards.deck3?.length || 0}</span>
-          <span className="text-sm text-blue-600">三级卡</span>
+    <div className="flex flex-col gap-4">
+      {/* Level 3 */}
+      <div className="flex flex-col gap-2">
+        <h4 className="text-lg font-bold text-gray-800">Level 3</h4>
+        <div className="grid grid-cols-4 gap-2">
+          {cards.level3.map((card) => (
+            <Card
+              key={card.id}
+              card={card}
+              onClick={() => handleCardClick(card.id, 3)}
+              onReserve={() => handleCardReserve(card.id, 3)}
+              disabled={disabled}
+            />
+          ))}
+          {cards.deck3.length > 0 && (
+            <div className="w-32 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-600">牌堆: {cards.deck3.length}</span>
+            </div>
+          )}
         </div>
-        {cards.level3.map((card) => (
-          <Card
-            key={card.id}
-            card={card}
-            onPurchase={() => handlePurchaseCard(card)}
-            onReserve={() => handleReserveCard(card)}
-            onClick={() => handleCardClick(card)}
-            isSelected={selectedCard?.id === card.id}
-          />
-        ))}
       </div>
 
-      {/* 二级卡牌 */}
-      <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
-        {/* 二级卡牌剩余数量 */}
-        <div className="w-16 h-44 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-200 
-                    border-2 border-yellow-300 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-yellow-600">{gameState.cards.deck2?.length || 0}</span>
-          <span className="text-sm text-yellow-600">二级卡</span>
+      {/* Level 2 */}
+      <div className="flex flex-col gap-2">
+        <h4 className="text-lg font-bold text-gray-800">Level 2</h4>
+        <div className="grid grid-cols-4 gap-2">
+          {cards.level2.map((card) => (
+            <Card
+              key={card.id}
+              card={card}
+              onClick={() => handleCardClick(card.id, 2)}
+              onReserve={() => handleCardReserve(card.id, 2)}
+              disabled={disabled}
+            />
+          ))}
+          {cards.deck2.length > 0 && (
+            <div className="w-32 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-600">牌堆: {cards.deck2.length}</span>
+            </div>
+          )}
         </div>
-        {cards.level2.map((card) => (
-          <Card
-            key={card.id}
-            card={card}
-            onPurchase={() => handlePurchaseCard(card)}
-            onReserve={() => handleReserveCard(card)}
-            onClick={() => handleCardClick(card)}
-            isSelected={selectedCard?.id === card.id}
-          />
-        ))}
       </div>
 
-      {/* 一级卡牌 */}
-      <div className="flex items-center gap-4" onClick={e => e.stopPropagation()}>
-        {/* 一级卡牌剩余数量 */}
-        <div className="w-16 h-44 rounded-xl bg-gradient-to-br from-green-100 to-green-200 
-                    border-2 border-green-300 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-green-600">{gameState.cards.deck1?.length || 0}</span>
-          <span className="text-sm text-green-600">一级卡</span>
+      {/* Level 1 */}
+      <div className="flex flex-col gap-2">
+        <h4 className="text-lg font-bold text-gray-800">Level 1</h4>
+        <div className="grid grid-cols-4 gap-2">
+          {cards.level1.map((card) => (
+            <Card
+              key={card.id}
+              card={card}
+              onClick={() => handleCardClick(card.id, 1)}
+              onReserve={() => handleCardReserve(card.id, 1)}
+              disabled={disabled}
+            />
+          ))}
+          {cards.deck1.length > 0 && (
+            <div className="w-32 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-600">牌堆: {cards.deck1.length}</span>
+            </div>
+          )}
         </div>
-        {cards.level1.map((card) => (
-          <Card
-            key={card.id}
-            card={card}
-            onPurchase={() => handlePurchaseCard(card)}
-            onReserve={() => handleReserveCard(card)}
-            onClick={() => handleCardClick(card)}
-            isSelected={selectedCard?.id === card.id}
-          />
-        ))}
       </div>
-
-      {/* 遮罩层 - 当有卡片被选中时显示 */}
-      {selectedCard && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={handleBackgroundClick}
-        />
-      )}
     </div>
   );
 }; 

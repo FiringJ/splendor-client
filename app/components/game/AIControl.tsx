@@ -1,22 +1,31 @@
-import React from 'react';
+'use client';
+
+import type { AIControlProps } from '../../types/components';
 import { useGameStore } from '../../store/gameStore';
 
-export const AIControl: React.FC = () => {
-  const { isAIEnabled, enableAI } = useGameStore();
+export const AIControl = ({ onToggle }: AIControlProps) => {
+  const isAIEnabled = useGameStore(state => state.isAIEnabled);
+
+  const handleToggle = () => {
+    const action = {
+      type: 'TOGGLE_AI' as const,
+      payload: {
+        enabled: !isAIEnabled,
+      },
+    };
+    onToggle(action);
+  };
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
-      <label className="flex items-center cursor-pointer">
-        <input
-          type="checkbox"
-          checked={isAIEnabled}
-          onChange={(e) => enableAI(e.target.checked)}
-          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-        />
-        <span className="ml-2 text-sm font-medium text-gray-900">
-          启用AI玩家
-        </span>
-      </label>
-    </div>
+    <button
+      onClick={handleToggle}
+      className={`
+        px-4 py-2 rounded-lg
+        ${isAIEnabled ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}
+        hover:opacity-80 transition-opacity
+      `}
+    >
+      {isAIEnabled ? 'AI 已开启' : 'AI 已关闭'}
+    </button>
   );
 }; 

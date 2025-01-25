@@ -1,30 +1,69 @@
-export type GemType = 'diamond' | 'sapphire' | 'emerald' | 'ruby' | 'onyx' | 'gold';
+export type GemType = 'red' | 'green' | 'blue' | 'white' | 'black' | 'gold';
 
-export interface GameAction {
-  type: 'takeGems' | 'purchaseCard' | 'reserveCard' | 'endTurn' | 'acquireNoble';
-  playerId: string;
-  playerName: string;
-  details: {
-    gems?: Partial<Record<GemType, number>>;
-    card?: {
-      id: number;
-      gem: GemType;
-      points: number;
-    };
-    noble?: {
-      id: number;
-      points: number;
-    };
+export type GameActionType =
+  | 'TAKE_GEMS'
+  | 'PURCHASE_CARD'
+  | 'RESERVE_CARD'
+  | 'CLAIM_NOBLE'
+  | 'TOGGLE_AI'
+  | 'RESTART_GAME';
+
+export interface TakeGemsAction {
+  type: 'TAKE_GEMS';
+  payload: {
+    gems: Record<GemType, number>;
   };
-  timestamp: number;
 }
 
+export interface PurchaseCardAction {
+  type: 'PURCHASE_CARD';
+  payload: {
+    cardId: string;
+    level: number;
+  };
+}
+
+export interface ReserveCardAction {
+  type: 'RESERVE_CARD';
+  payload: {
+    cardId: string;
+    level: number;
+  };
+}
+
+export interface ClaimNobleAction {
+  type: 'CLAIM_NOBLE';
+  payload: {
+    nobleId: string;
+  };
+}
+
+export interface ToggleAIAction {
+  type: 'TOGGLE_AI';
+  payload: {
+    enabled: boolean;
+  };
+}
+
+export interface RestartGameAction {
+  type: 'RESTART_GAME';
+  payload: Record<string, never>;
+}
+
+export type GameAction =
+  | TakeGemsAction
+  | PurchaseCardAction
+  | ReserveCardAction
+  | ClaimNobleAction
+  | ToggleAIAction
+  | RestartGameAction;
+
 export interface Card {
-  id: number;
+  id: string;
   level: 1 | 2 | 3;
   points: number;
   gem: GemType;
-  cost: Partial<Record<GemType, number>>;
+  cost: Record<GemType, number>;
   image?: string;
   spritePosition: {
     x: number;  // 精灵图中的x坐标（第几列，从0开始）
@@ -33,17 +72,17 @@ export interface Card {
 }
 
 export interface Noble {
-  id: number;
+  id: string;
   points: number;
   name: string;
-  requirements: Partial<Record<GemType, number>>;
+  requirements: Record<GemType, number>;
   image?: string;
 }
 
 export interface Player {
   id: string;
   name: string;
-  gems: Partial<Record<GemType, number>>;
+  gems: Record<GemType, number>;
   cards: Card[];
   reservedCards: Card[];
   nobles: Noble[];
@@ -51,9 +90,9 @@ export interface Player {
 }
 
 export interface GameState {
-  players: Player[];
-  currentPlayer: number;
-  currentTurn?: string;  // 添加这个字段用于在线游戏
+  players: Map<string, Player>;
+  currentPlayer: Player | null;
+  currentTurn: string | null;
   gems: Record<GemType, number>;
   cards: {
     level1: Card[];
@@ -66,7 +105,8 @@ export interface GameState {
   nobles: Noble[];
   status: 'waiting' | 'playing' | 'finished';
   lastRound: boolean;
-  lastRoundStartPlayer: number | null;
-  winner: string | null;
+  lastRoundStartPlayer: string | null;
+  winner: Player | null;
   actions: GameAction[];
+  isAIEnabled: boolean;
 } 
