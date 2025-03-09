@@ -12,10 +12,7 @@ export default function GameLayout() {
 
   return (
     <main className="min-h-screen bg-green-50">
-      <div className="container mx-auto p-4">
-        <GameSetup />
-        {gameState && <GameBoard />}
-      </div>
+      {gameState ? <GameBoard /> : <GameSetup />}
     </main>
   );
 } 

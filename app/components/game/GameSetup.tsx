@@ -28,8 +28,8 @@ export function GameSetup() {
         await joinRoom(roomId, aiId);
       }
 
-      // 开始游戏
-      const response = await startGame(roomId);
+      // 开始游戏，传递isLocalMode: true参数
+      const response = await startGame(roomId, true);
       if (response.success && response.gameState) {
         setGameState(response.gameState);
         if (includeAI) {
@@ -71,7 +71,7 @@ export function GameSetup() {
 
   const handleStartOnlineGame = async () => {
     try {
-      const response = await startGame(roomId);
+      const response = await startGame(roomId, false);
       if (response.success && response.gameState) {
         setGameState(response.gameState);
       }
