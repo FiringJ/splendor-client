@@ -15,11 +15,13 @@ export interface RoomState {
   hostId: string;
   status: 'waiting' | 'playing' | 'finished';
   gameState: GameState | null;
+  isLocalMode?: boolean;
 }
 
 export interface CreateRoomResponse {
   success: boolean;
   roomId: string;
+  room: RoomState;
   error?: string;
 }
 

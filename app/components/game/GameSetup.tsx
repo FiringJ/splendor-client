@@ -7,7 +7,6 @@ import { useRoomStore } from '../../store/roomStore';
 
 export function GameSetup() {
   const [playerCount, setPlayerCount] = useState('2');
-  const [includeAI, setIncludeAI] = useState(false);
   const [roomId, setRoomId] = useState('');
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [mode, setMode] = useState<'local' | 'online'>('local');
@@ -19,22 +18,41 @@ export function GameSetup() {
 
   const handleLocalGame = async () => {
     try {
+      console.log('Starting AI game with player count:', playerCount);
+      
+      // 在开始游戏前就启用AI
+      console.log('Enabling AI before game starts');
+      enableAI(true);
+      
       // 先创建房间
       const roomId = await createRoom(playerId);
+      console.log('Created room for AI game:', roomId);
 
-      // 如果需要多个玩家，创建AI玩家加入房间
+      // 创建AI玩家加入房间
       for (let i = 1; i < parseInt(playerCount); i++) {
         const aiId = `ai_${i}_${Math.random().toString(36).substr(2, 9)}`;
         await joinRoom(roomId, aiId);
+        console.log(`Added AI player ${i}:`, aiId);
       }
 
+      console.log('Starting game with isLocalMode=true');
       // 开始游戏，传递isLocalMode: true参数
       const response = await startGame(roomId, true);
       if (response.success && response.gameState) {
+        console.log('Game started successfully');
         setGameState(response.gameState);
-        if (includeAI) {
+        
+        // 再次确认AI已启用
+        const isAIEnabled = useGameStore.getState().isAIEnabled;
+        console.log('AI enabled status after game start:', isAIEnabled);
+        
+        // 如果AI未启用，再次启用
+        if (!isAIEnabled) {
+          console.log('AI not enabled after game start, enabling again');
           enableAI(true);
         }
+      } else {
+        console.error('Failed to start game:', response.error);
       }
     } catch (error) {
       console.error('Failed to start local game:', error);
@@ -97,7 +115,7 @@ export function GameSetup() {
             onClick={() => setMode('local')}
             className={`px-4 py-2 rounded ${mode === 'local' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
           >
-            单机模式
+            AI对战
           </button>
           <button
             onClick={() => setMode('online')}
@@ -109,29 +127,17 @@ export function GameSetup() {
 
         {mode === 'local' ? (
           <>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">玩家数量</label>
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-2">AI对手数量</label>
               <select
                 value={playerCount}
                 onChange={(e) => setPlayerCount(e.target.value)}
                 className="w-full p-2 border rounded"
               >
-                <option value="2">2人</option>
-                <option value="3">3人</option>
-                <option value="4">4人</option>
+                <option value="2">1个AI对手</option>
+                <option value="3">2个AI对手</option>
+                <option value="4">3个AI对手</option>
               </select>
-            </div>
-
-            <div className="mb-6">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={includeAI}
-                  onChange={(e) => setIncludeAI(e.target.checked)}
-                  className="mr-2"
-                />
-                <span>包含AI玩家（替换最后一个玩家）</span>
-              </label>
             </div>
 
             <button
