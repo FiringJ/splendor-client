@@ -5,7 +5,6 @@ export type GameActionType =
   | 'PURCHASE_CARD'
   | 'RESERVE_CARD'
   | 'CLAIM_NOBLE'
-  | 'TOGGLE_AI'
   | 'RESTART_GAME';
 
 export interface TakeGemsAction {
@@ -38,13 +37,6 @@ export interface ClaimNobleAction {
   };
 }
 
-export interface ToggleAIAction {
-  type: 'TOGGLE_AI';
-  payload: {
-    enabled: boolean;
-  };
-}
-
 export interface RestartGameAction {
   type: 'RESTART_GAME';
   payload: Record<string, never>;
@@ -55,7 +47,6 @@ export type GameAction =
   | PurchaseCardAction
   | ReserveCardAction
   | ClaimNobleAction
-  | ToggleAIAction
   | RestartGameAction;
 
 export interface Card {
@@ -107,5 +98,4 @@ export interface GameState {
   lastRoundStartPlayer: string | null;
   winner: Player | null;
   actions: GameAction[];
-  isAIEnabled: boolean;
 } 

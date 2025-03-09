@@ -34,8 +34,6 @@ const formatAction = (action: GameAction) => {
       return `预定卡牌：${action.payload.cardId}`;
     case 'CLAIM_NOBLE':
       return `获得贵族：${action.payload.nobleId}`;
-    case 'TOGGLE_AI':
-      return `${action.payload.enabled ? '开启' : '关闭'} AI`;
     case 'RESTART_GAME':
       return '重新开始游戏';
     default:

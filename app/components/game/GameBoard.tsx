@@ -11,7 +11,6 @@ import { GemToken } from './GemToken';
 import { PlayerPanel } from './PlayerPanel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { ActionHistory } from './ActionHistory';
-import { AIControl } from './AIControl';
 import { GameOverDialog } from './GameOverDialog';
 import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
@@ -78,7 +77,6 @@ export const GameBoard = () => {
 
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">Splendor</h1>
-            <AIControl onToggle={handleAction} />
           </div>
 
           {confirmDialog && (

@@ -34,10 +34,6 @@ export interface ActionHistoryProps {
   actions: GameAction[];
 }
 
-export interface AIControlProps {
-  onToggle: (action: GameAction) => Promise<void>;
-}
-
 export interface GameOverDialogProps {
   onPlayAgain: (action: GameAction) => Promise<void>;
 }

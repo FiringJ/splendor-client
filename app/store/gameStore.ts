@@ -4,7 +4,6 @@ import { GameValidator } from '../lib/game/validator';
 
 interface GameStore {
   gameState: GameState | null;
-  isAIEnabled: boolean;
   error: string | null;
   loading: boolean;
   selectedGems: Partial<Record<GemType, number>>;
@@ -22,7 +21,6 @@ interface GameStore {
   setGameState: (gameState: GameState) => void;
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
-  enableAI: (enable: boolean) => void;
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
   hideConfirm: () => void;
   selectGem: (gemType: GemType) => void;
@@ -34,7 +32,6 @@ interface GameStore {
 
 export const useGameStore = create<GameStore>((set) => ({
   gameState: null,
-  isAIEnabled: false,
   error: null,
   loading: false,
   selectedGems: {},
@@ -51,10 +48,6 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setLoading: (loading) => {
     set({ loading });
-  },
-
-  enableAI: (enable) => {
-    set({ isAIEnabled: enable });
   },
 
   showConfirm: (title, message, onConfirm) => {

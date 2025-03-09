@@ -12,17 +12,12 @@ export function GameSetup() {
   const [mode, setMode] = useState<'local' | 'online'>('local');
   const { createRoom, joinRoom, startGame } = useSocket();
   const setGameState = useGameStore(state => state.setGameState);
-  const enableAI = useGameStore(state => state.enableAI);
   const roomState = useRoomStore(state => state.roomState);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
 
   const handleLocalGame = async () => {
     try {
       console.log('Starting AI game with player count:', playerCount);
-      
-      // 在开始游戏前就启用AI
-      console.log('Enabling AI before game starts');
-      enableAI(true);
       
       // 先创建房间
       const roomId = await createRoom(playerId);
@@ -41,16 +36,6 @@ export function GameSetup() {
       if (response.success && response.gameState) {
         console.log('Game started successfully');
         setGameState(response.gameState);
-        
-        // 再次确认AI已启用
-        const isAIEnabled = useGameStore.getState().isAIEnabled;
-        console.log('AI enabled status after game start:', isAIEnabled);
-        
-        // 如果AI未启用，再次启用
-        if (!isAIEnabled) {
-          console.log('AI not enabled after game start, enabling again');
-          enableAI(true);
-        }
       } else {
         console.error('Failed to start game:', response.error);
       }

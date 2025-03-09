@@ -161,12 +161,6 @@ export const useSocket = () => {
           setGameState(data.gameState);
 
           console.log('Game started successfully, all states updated');
-
-          // 确保AI已启用（如果是本地模式）
-          if (data.room.isLocalMode) {
-            console.log('Local mode detected, ensuring AI is enabled');
-            useGameStore.getState().enableAI(true);
-          }
         } catch (error: unknown) {
           console.error('Error handling gameStarted event:', error);
           setError('游戏开始时出现错误，请刷新页面重试');
