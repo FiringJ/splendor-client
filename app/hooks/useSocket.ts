@@ -8,6 +8,10 @@ import { GameState, GameAction, TakeGemsAction, PurchaseCardAction, ReserveCardA
 import { useRoomStore } from '../store/roomStore';
 import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse, GameStartedEvent } from '../types/socket';
 
+// 在文件顶部添加一个全局变量来跟踪socket是否已初始化
+// 这个变量在组件重新渲染时不会被重置
+let isSocketGloballyInitialized = false;
+
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
   const { setRoomId, setRoomState } = useRoomStore();
@@ -18,20 +22,15 @@ export const useSocket = () => {
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    // 只有在socketRef.current为null且未初始化过时才创建新的socket连接
-    if (!socketRef.current && !isInitialized.current) {
+    // 只有在socketRef.current为null且全局变量表示未初始化时才创建新的socket连接
+    if (!socketRef.current && !isSocketGloballyInitialized) {
       console.log('Initializing socket connection...');
+      isSocketGloballyInitialized = true;
       isInitialized.current = true;
       socketRef.current = io('http://localhost:3001', {
         withCredentials: true,
-        reconnection: true,
         reconnectionAttempts: Infinity,
-        reconnectionDelay: 2000,
-        reconnectionDelayMax: 10000,
-        timeout: 30000,
-        transports: ['websocket', 'polling'],
-        forceNew: false,
-        autoConnect: true
+        timeout: 30000
       });
 
       const socket = socketRef.current;
