@@ -26,7 +26,7 @@ export function GameSetup() {
       // 创建AI玩家加入房间
       for (let i = 1; i < parseInt(playerCount); i++) {
         const aiId = `ai_${i}_${Math.random().toString(36).substr(2, 9)}`;
-        await joinRoom(roomId, aiId);
+        await joinRoom(roomId, aiId, true);
         console.log(`Added AI player ${i}:`, aiId);
       }
 

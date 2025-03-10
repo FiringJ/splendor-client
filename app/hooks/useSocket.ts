@@ -63,15 +63,13 @@ export const useSocket = () => {
       socket.on('disconnect', (reason) => {
         console.log('Disconnected from server, reason:', reason);
 
-        // 获取当前游戏状态和AI状态
+        // 获取当前游戏状态和房间状态
         const gameState = useGameStore.getState().gameState;
-        const isAIEnabled = useGameStore.getState().isAIEnabled;
         const roomState = useRoomStore.getState().roomState;
-        const isAIGame = isAIEnabled || roomState?.isLocalMode;
+        const isAIGame = roomState?.isLocalMode;
 
         console.log('Current game state:', {
           hasGameState: !!gameState,
-          isAIEnabled,
           isLocalMode: roomState?.isLocalMode,
           roomStatus: roomState?.status,
           isAIGame
@@ -229,7 +227,7 @@ export const useSocket = () => {
   };
 
   // 加入房间
-  const joinRoom = async (roomId: string, playerId: string) => {
+  const joinRoom = async (roomId: string, playerId: string, isAI: boolean = false) => {
     setLoading(true);
     try {
       if (!socketRef.current) {
@@ -241,8 +239,11 @@ export const useSocket = () => {
           if (response.success && response.room) {
             setRoomId(roomId);
             setRoomState(response.room);
-            const playerNumber = response.room.players.length;
-            setPlayer(playerId, `Player ${playerNumber}`);
+            // 只有当不是AI玩家时，才更新当前玩家信息
+            if (!isAI) {
+              const playerNumber = response.room.players.length;
+              setPlayer(playerId, `Player ${playerNumber}`);
+            }
             resolve(response);
           } else {
             reject(new Error(response.error || 'Failed to join room'));
@@ -298,11 +299,10 @@ export const useSocket = () => {
   const performGameAction = async (roomId: string, action: GameAction) => {
     setLoading(true);
     try {
-      // 获取当前游戏状态和AI状态
+      // 获取当前游戏状态和房间状态
       const gameState = useGameStore.getState().gameState;
-      const isAIEnabled = useGameStore.getState().isAIEnabled;
       const roomState = useRoomStore.getState().roomState;
-      const isAIGame = isAIEnabled || roomState?.isLocalMode;
+      const isAIGame = roomState?.isLocalMode;
 
       // 检查是否是AI对战模式且WebSocket连接已断开
       if (gameState && isAIGame && (!socketRef.current || !socketRef.current.connected)) {
@@ -432,10 +432,10 @@ export const useSocket = () => {
   };
 
   return {
+    socket: socketRef.current,
     createRoom,
     joinRoom,
     startGame,
-    performGameAction,
-    socket: socketRef.current
+    performGameAction
   };
 }; 
