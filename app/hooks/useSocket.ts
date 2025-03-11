@@ -78,7 +78,7 @@ export const useSocket = () => {
       });
 
       // 监听新的游戏状态更新事件
-      socket.on('gameStateUpdated', (data: { gameState: ServerGameState; action: GameAction }) => {
+      socket.on('gameStateUpdate', (data: { gameState: ServerGameState; action: GameAction }) => {
         console.log('Game state updated:', data);
         if (data.gameState) {
           // 转换服务器状态为客户端状态
@@ -133,13 +133,13 @@ export const useSocket = () => {
 
     // cleanup函数不需要断开连接，只需要移除当前组件注册的事件监听
     return () => {
-      if (socket) {
-        // 只移除当前组件特定的监听器
-        socket.off('roomUpdate');
-        socket.off('gameStarted');
-        socket.off('gameStateUpdated');
-        socket.off('error');
-      }
+      // if (socket) {
+      //   只移除当前组件特定的监听器
+      //   socket.off('roomUpdate');
+      //   socket.off('gameStarted');
+      //   socket.off('gameStateUpdate');
+      //   socket.off('error');
+      // }
     };
   }, []);
 
@@ -239,16 +239,6 @@ export const useSocket = () => {
     }
   };
 
-  // 监听游戏状态变化以自动触发AI行动
-  useEffect(() => {
-    const gameState = useGameStore.getState().gameState;
-    const roomId = useRoomStore.getState().roomId;
-
-    if (gameState && roomId) {
-      handleAITurn(roomId);
-    }
-  }, [useGameStore(state => state.gameState?.currentTurn)]);
-
   // 开始游戏
   const startGame = async (roomId: string, isLocalMode?: boolean) => {
     setLoading(true);
@@ -260,8 +250,6 @@ export const useSocket = () => {
       return new Promise<StartGameResponse>((resolve, reject) => {
         socket.emit('startGame', { roomId, isLocalMode }, (response: StartGameResponse) => {
           if (response.success) {
-            // 游戏开始后检查是否需要执行AI操作
-            setTimeout(() => handleAITurn(roomId), 500);
             resolve(response);
           } else {
             reject(new Error(response.error || 'Failed to start game'));
