@@ -22,16 +22,13 @@ export function GameSetup() {
       
       // 先创建房间
       const roomId = await createRoom(playerId);
-      console.log('Created room for AI game:', roomId);
 
       // 创建AI玩家加入房间
       for (let i = 1; i < parseInt(playerCount); i++) {
         const aiId = `ai_${i}_${Math.random().toString(36).substr(2, 9)}`;
         await joinRoom(roomId, aiId, true);
-        console.log(`Added AI player ${i}:`, aiId);
       }
 
-      console.log('Starting game with isLocalMode=true');
       // 开始游戏，传递isLocalMode: true参数
       const response = await startGame(roomId, true);
       if (response.success && response.gameState) {

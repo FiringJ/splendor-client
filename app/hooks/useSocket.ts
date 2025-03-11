@@ -1,45 +1,115 @@
 "use client";
 
-import { useRef, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useUserStore } from '../store/userStore';
-import { GameState, GameAction, TakeGemsAction, PurchaseCardAction, ReserveCardAction, GemType } from '../types/game';
+import { GameState, GameAction, Player } from '../types/game';
 import { useRoomStore } from '../store/roomStore';
-import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse, GameStartedEvent } from '../types/socket';
+import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse } from '../types/room';
+import { useSocketStore } from '../store/socketStore';
+import { AIPlayer } from '../lib/game/ai';
 
-// 在文件顶部添加一个全局变量来跟踪socket是否已初始化
-// 这个变量在组件重新渲染时不会被重置
-let isSocketGloballyInitialized = false;
+// 服务器返回的GameState，其中winner可能是string而非Player对象
+interface ServerGameState extends Omit<GameState, 'players' | 'winner'> {
+  players: Map<string, Player> | Player[];  // 服务器可能返回Map或Array
+  winner: string | null;                    // 服务器返回winnerId
+}
+
+// 适配函数：将服务器GameState转换为客户端GameState
+function adaptGameState(serverState: ServerGameState): GameState {
+  // 确保players是数组形式
+  const players = Array.isArray(serverState.players)
+    ? serverState.players
+    : Array.from(serverState.players.values());
+
+  // 如果有获胜者ID，找到对应的Player对象
+  let winner: Player | null = null;
+  if (serverState.winner) {
+    winner = players.find(p => p.id === serverState.winner) || null;
+  }
+
+  return {
+    ...serverState,
+    players,
+    winner
+  } as GameState;
+}
 
 export const useSocket = () => {
-  const socketRef = useRef<Socket | null>(null);
+  const { socket, initSocket, isInitialized } = useSocketStore();
   const { setRoomId, setRoomState } = useRoomStore();
   const { setGameState, setError, setLoading } = useGameStore();
   const { setPlayer } = useUserStore();
 
-  // 使用useRef来跟踪是否已经初始化过socket
-  const isInitialized = useRef(false);
-
   useEffect(() => {
-    // 只有在socketRef.current为null且全局变量表示未初始化时才创建新的socket连接
-    if (!socketRef.current && !isSocketGloballyInitialized) {
-      console.log('Initializing socket connection...');
-      isSocketGloballyInitialized = true;
-      isInitialized.current = true;
-      socketRef.current = io('http://localhost:3001', {
-        withCredentials: true,
-        reconnectionAttempts: Infinity,
-        timeout: 30000
+    // 如果socket尚未初始化，则初始化它
+    if (!isInitialized) {
+      const socket = initSocket();
+
+      // 监听房间更新
+      socket.on('roomUpdate', (roomState: RoomState) => {
+        console.log('Room updated:', roomState);
+        setRoomState(roomState);
       });
 
-      const socket = socketRef.current;
+      // 监听游戏开始
+      socket.on('gameStarted', (data: { gameState: ServerGameState; room: RoomState; status: string }) => {
+        try {
+          console.log('Received gameStarted event:', data);
+          if (!data || !data.gameState || !data.room) {
+            console.error('Invalid gameStarted data received:', data);
+            return;
+          }
 
-      // 监听连接事件
+          // 先更新房间状态
+          console.log('Updating room state with:', data.room);
+          setRoomState(data.room);
+
+          // 再更新游戏状态 - 使用适配函数转换
+          console.log('Converting and updating game state with:', data.gameState);
+          const clientGameState = adaptGameState(data.gameState);
+          setGameState(clientGameState);
+
+          console.log('Game started successfully, all states updated');
+        } catch (error: unknown) {
+          console.error('Error handling gameStarted event:', error);
+          setError('游戏开始时出现错误，请刷新页面重试');
+        }
+      });
+
+      // 监听新的游戏状态更新事件
+      socket.on('gameStateUpdated', (data: { gameState: ServerGameState; action: GameAction }) => {
+        console.log('Game state updated:', data);
+        if (data.gameState) {
+          // 转换服务器状态为客户端状态
+          const clientGameState = adaptGameState(data.gameState);
+          setGameState(clientGameState);
+
+          // 如果游戏已结束且有获胜者，显示获胜者信息
+          if (clientGameState.winner) {
+            useGameStore.getState().showConfirm(
+              '游戏结束',
+              `${clientGameState.winner.name}获胜！`,
+              () => { } // 空函数，只是用于显示信息
+            );
+          }
+
+          // 处理完当前动作后，如果是AI玩家的回合，自动执行AI动作
+          const roomId = useRoomStore.getState().roomId;
+          if (roomId) {
+            setTimeout(() => handleAITurn(roomId), 500);
+          }
+        }
+      });
+
+      // 监听错误消息
+      socket.on('error', (error: string) => {
+        console.error('Socket error:', error);
+        setError(error);
+      });
+
+      // 监听连接事件，处理重连
       socket.on('connect', () => {
-        console.log('Connected to server with ID:', socket.id);
-        setError(null);
-
         // 重新加入房间（如果有）
         const roomId = useRoomStore.getState().roomId;
         const playerId = useUserStore.getState().playerId;
@@ -59,155 +129,30 @@ export const useSocket = () => {
           });
         }
       });
-
-      socket.on('disconnect', (reason) => {
-        console.log('Disconnected from server, reason:', reason);
-
-        // 获取当前游戏状态和房间状态
-        const gameState = useGameStore.getState().gameState;
-        const roomState = useRoomStore.getState().roomState;
-        const isAIGame = roomState?.isLocalMode;
-
-        console.log('Current game state:', {
-          hasGameState: !!gameState,
-          isLocalMode: roomState?.isLocalMode,
-          roomStatus: roomState?.status,
-          isAIGame
-        });
-
-        // 如果是AI对战模式下的游戏已经开始，不要尝试重连也不要显示错误
-        if (gameState && isAIGame) {
-          console.log('AI game in progress, attempting to reconnect silently');
-          // 尝试重连，但不显示错误消息
-          setTimeout(() => {
-            if (socketRef.current && !socketRef.current.connected) {
-              console.log('Attempting to reconnect silently for AI game...');
-              socketRef.current.connect();
-            }
-          }, 1000);
-          return;
-        }
-
-        // 只有在非AI对战模式下才尝试重连和显示错误
-        if (reason === 'io server disconnect' || reason === 'io client disconnect') {
-          console.log('Attempting to reconnect...');
-          setTimeout(() => {
-            if (socketRef.current && !socketRef.current.connected) {
-              socketRef.current.connect();
-            }
-          }, 1000);
-        } else {
-          // 对于其他断开原因，也尝试重连
-          setTimeout(() => {
-            if (socketRef.current && !socketRef.current.connected) {
-              console.log('Still disconnected, attempting to reconnect...');
-              socketRef.current.connect();
-            }
-          }, 2000);
-        }
-
-        // 只有在非AI对战模式下才显示错误
-        if (!(gameState && isAIGame)) {
-          setError('与服务器的连接已断开，正在尝试重新连接...');
-        }
-      });
-
-      socket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-        setError('连接服务器失败，请检查网络连接');
-      });
-
-      socket.on('reconnect', (attemptNumber) => {
-        console.log('Reconnected on attempt:', attemptNumber);
-        setError(null);
-      });
-
-      socket.on('reconnect_attempt', (attemptNumber) => {
-        console.log('Attempting to reconnect:', attemptNumber);
-      });
-
-      socket.on('reconnect_error', (error) => {
-        console.error('Reconnection error:', error);
-      });
-
-      socket.on('reconnect_failed', () => {
-        console.error('Failed to reconnect');
-        setError('重连失败，请刷新页面重试');
-      });
-
-      // 监听房间更新
-      socket.on('roomUpdate', (roomState: RoomState) => {
-        console.log('Room updated:', roomState);
-        setRoomState(roomState);
-      });
-
-      // 监听游戏开始
-      socket.on('gameStarted', (data: GameStartedEvent) => {
-        try {
-          console.log('Received gameStarted event:', data);
-          if (!data || !data.gameState || !data.room) {
-            console.error('Invalid gameStarted data received:', data);
-            return;
-          }
-
-          // 先更新房间状态
-          console.log('Updating room state with:', data.room);
-          setRoomState(data.room);
-
-          // 再更新游戏状态
-          console.log('Updating game state with:', data.gameState);
-          setGameState(data.gameState);
-
-          console.log('Game started successfully, all states updated');
-        } catch (error: unknown) {
-          console.error('Error handling gameStarted event:', error);
-          setError('游戏开始时出现错误，请刷新页面重试');
-        }
-      });
-
-      // 监听游戏状态更新
-      socket.on('gameStateUpdate', (data: { gameState: GameState; status: string }) => {
-        console.log('Game state updated:', data);
-        if (data.gameState) {
-          setGameState(data.gameState);
-        }
-      });
-
-      // 监听错误消息
-      socket.on('error', (error: string) => {
-        console.error('Socket error:', error);
-        setError(error);
-      });
     }
 
+    // cleanup函数不需要断开连接，只需要移除当前组件注册的事件监听
     return () => {
-      // 不在清理函数中断开连接，保持socket连接
-      if (socketRef.current) {
-        // 只移除事件监听器，不断开连接
-        socketRef.current.off('connect');
-        socketRef.current.off('connect_error');
-        socketRef.current.off('reconnect');
-        socketRef.current.off('reconnect_attempt');
-        socketRef.current.off('reconnect_failed');
-        socketRef.current.off('roomUpdate');
-        socketRef.current.off('gameStarted');
-        socketRef.current.off('gameStateUpdate');
-        socketRef.current.off('error');
-        // 不调用disconnect()，保持连接
+      if (socket) {
+        // 只移除当前组件特定的监听器
+        socket.off('roomUpdate');
+        socket.off('gameStarted');
+        socket.off('gameStateUpdated');
+        socket.off('error');
       }
     };
-  }, [setRoomState, setGameState, setError]);
+  }, []);
 
   // 创建房间
   const createRoom = async (playerId: string) => {
     setLoading(true);
     try {
-      if (!socketRef.current) {
+      if (!socket) {
         throw new Error('Socket not connected');
       }
 
       return new Promise<string>((resolve, reject) => {
-        socketRef.current!.emit('createRoom', { playerId }, (response: CreateRoomResponse) => {
+        socket.emit('createRoom', { playerId }, (response: CreateRoomResponse) => {
           if (response.roomId) {
             setRoomId(response.roomId);
             setRoomState(response.room);
@@ -230,12 +175,12 @@ export const useSocket = () => {
   const joinRoom = async (roomId: string, playerId: string, isAI: boolean = false) => {
     setLoading(true);
     try {
-      if (!socketRef.current) {
+      if (!socket) {
         throw new Error('Socket not connected');
       }
 
       return new Promise<JoinRoomResponse>((resolve, reject) => {
-        socketRef.current!.emit('joinRoom', { roomId, playerId }, (response: JoinRoomResponse) => {
+        socket.emit('joinRoom', { roomId, playerId, isAI }, (response: JoinRoomResponse) => {
           if (response.success && response.room) {
             setRoomId(roomId);
             setRoomState(response.room);
@@ -258,17 +203,65 @@ export const useSocket = () => {
     }
   };
 
+  // 添加一个处理AI行动的新函数
+  const handleAITurn = async (roomId: string) => {
+    // 获取当前游戏状态
+    const gameState = useGameStore.getState().gameState;
+    if (!gameState) return;
+
+    // 检查当前玩家是否为AI
+    const currentPlayerId = gameState.currentTurn;
+    const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
+
+    // 优先使用isAI属性，如果没有则通过ID或名称判断
+    const isAI = currentPlayer && (
+      currentPlayer.isAI === true ||
+      currentPlayer.id.includes('AI') ||
+      currentPlayer.name.includes('AI')
+    );
+
+    if (isAI) {
+      console.log('AI player turn detected, generating action...');
+
+      // 设置一个小延迟，以便UI有时间更新
+      setTimeout(async () => {
+        try {
+          // 获取AI的下一步操作
+          const aiAction = AIPlayer.getNextAction(gameState);
+          console.log('AI action generated:', aiAction);
+
+          // 执行AI操作
+          await performGameAction(roomId, aiAction);
+        } catch (error) {
+          console.error('Error during AI turn:', error);
+        }
+      }, 1000); // 1秒延迟，可根据需要调整
+    }
+  };
+
+  // 监听游戏状态变化以自动触发AI行动
+  useEffect(() => {
+    const gameState = useGameStore.getState().gameState;
+    const roomId = useRoomStore.getState().roomId;
+
+    if (gameState && roomId) {
+      handleAITurn(roomId);
+    }
+  }, [useGameStore(state => state.gameState?.currentTurn)]);
+
   // 开始游戏
   const startGame = async (roomId: string, isLocalMode?: boolean) => {
     setLoading(true);
     try {
-      if (!socketRef.current) {
+      if (!socket) {
         throw new Error('Socket not connected');
       }
 
       return new Promise<StartGameResponse>((resolve, reject) => {
-        socketRef.current!.emit('startGame', { roomId, isLocalMode }, (response: StartGameResponse) => {
+        socket.emit('startGame', { roomId, isLocalMode }, (response: StartGameResponse) => {
           if (response.success) {
+            // 游戏开始后检查是否需要执行AI操作
+            setTimeout(() => handleAITurn(roomId), 500);
             resolve(response);
           } else {
             reject(new Error(response.error || 'Failed to start game'));
@@ -299,113 +292,17 @@ export const useSocket = () => {
   const performGameAction = async (roomId: string, action: GameAction) => {
     setLoading(true);
     try {
-      // 获取当前游戏状态和房间状态
-      const gameState = useGameStore.getState().gameState;
-      const roomState = useRoomStore.getState().roomState;
-      const isAIGame = roomState?.isLocalMode;
-
-      // 检查是否是AI对战模式且WebSocket连接已断开
-      if (gameState && isAIGame && (!socketRef.current || !socketRef.current.connected)) {
-        console.log('AI game in progress, performing local action:', action);
-
-        // 在本地处理游戏操作
-        try {
-          // 这里我们需要模拟服务器的响应
-          // 对于简单的操作，我们可以直接更新游戏状态
-          // 对于复杂的操作，我们可能需要实现一个本地的游戏逻辑
-
-          // 根据不同的操作类型进行处理
-          switch (action.type) {
-            case 'TAKE_GEMS':
-              // 简单模拟拿宝石的操作
-              console.log('Local action: TAKE_GEMS', (action as TakeGemsAction).payload.gems);
-
-              // 更新本地游戏状态
-              const takeGemsAction = action as TakeGemsAction;
-              const newGameStateAfterTakeGems = { ...gameState };
-
-              // 更新玩家宝石
-              const currentPlayerIndex = newGameStateAfterTakeGems.players.findIndex(p => p.id === newGameStateAfterTakeGems.currentTurn);
-              if (currentPlayerIndex !== -1) {
-                const player = { ...newGameStateAfterTakeGems.players[currentPlayerIndex] };
-
-                // 更新玩家宝石
-                Object.entries(takeGemsAction.payload.gems).forEach(([gemType, count]) => {
-                  const gem = gemType as GemType;
-                  player.gems[gem] = (player.gems[gem] || 0) + count;
-                });
-
-                // 更新游戏宝石
-                Object.entries(takeGemsAction.payload.gems).forEach(([gemType, count]) => {
-                  const gem = gemType as GemType;
-                  newGameStateAfterTakeGems.gems[gem] = Math.max(0, (newGameStateAfterTakeGems.gems[gem] || 0) - count);
-                });
-
-                // 更新玩家
-                newGameStateAfterTakeGems.players[currentPlayerIndex] = player;
-
-                // 更新游戏状态
-                setGameState(newGameStateAfterTakeGems);
-
-                // 模拟AI回合
-                setTimeout(() => {
-                  console.log('Simulating AI turn...');
-                  // 在实际应用中，这里应该有更复杂的AI逻辑
-                  // 但为了简单起见，我们只是随机选择一些宝石
-
-                  // 更新游戏状态，切换到下一个玩家
-                  const nextPlayerIndex = (currentPlayerIndex + 1) % newGameStateAfterTakeGems.players.length;
-                  const nextGameState = { ...newGameStateAfterTakeGems };
-                  nextGameState.currentTurn = nextGameState.players[nextPlayerIndex].id;
-
-                  // 更新游戏状态
-                  setGameState(nextGameState);
-                }, 1000);
-              }
-
-              setLoading(false);
-              return Promise.resolve();
-
-            case 'PURCHASE_CARD':
-              // 简单模拟购买卡片的操作
-              console.log('Local action: PURCHASE_CARD', (action as PurchaseCardAction).payload.cardId);
-
-              // 在实际应用中，这里应该有更复杂的逻辑
-              // 但为了简单起见，我们只是记录操作
-              setLoading(false);
-              return Promise.resolve();
-
-            case 'RESERVE_CARD':
-              // 简单模拟预留卡片的操作
-              console.log('Local action: RESERVE_CARD', (action as ReserveCardAction).payload.cardId);
-
-              // 在实际应用中，这里应该有更复杂的逻辑
-              // 但为了简单起见，我们只是记录操作
-              setLoading(false);
-              return Promise.resolve();
-
-            default:
-              console.error('Unsupported local action type:', action.type);
-              setLoading(false);
-              return Promise.reject(new Error(`Unsupported local action type: ${action.type}`));
-          }
-        } catch (error) {
-          console.error('Error performing local action:', error);
-          setLoading(false);
-          return Promise.reject(error);
-        }
-      }
-
-      // 如果不是AI对战模式或WebSocket连接正常，则正常发送到服务器
-      if (!socketRef.current) {
-        throw new Error('Socket not connected');
+      // 如果WebSocket连接已断开，则抛出错误
+      if (!socket) {
+        throw new Error('Socket未连接');
       }
 
       return new Promise<void>((resolve, reject) => {
-        console.log('performGameAction', action);
+        console.log('执行游戏动作:', action);
 
-        socketRef.current!.emit('gameAction', { roomId, action }, (response: GameActionResponse) => {
+        socket.emit('gameAction', { roomId, action }, (response: GameActionResponse) => {
           if (response.success) {
+            // 操作成功，不需要在这里处理AI回合，因为会在gameStateUpdated事件中处理
             resolve();
           } else {
             // 处理特殊错误
@@ -415,10 +312,10 @@ export const useSocket = () => {
                 useGameStore.getState().showGemsToDiscard(currentTotal, playerId);
                 resolve();
               } else {
-                reject(new Error('Invalid GEMS_OVERFLOW response data'));
+                reject(new Error('无效的GEMS_OVERFLOW响应数据'));
               }
             } else {
-              reject(new Error(response.error || 'Failed to perform action'));
+              reject(new Error(response.error || '执行动作失败'));
             }
           }
         });
@@ -432,7 +329,7 @@ export const useSocket = () => {
   };
 
   return {
-    socket: socketRef.current,
+    socket,
     createRoom,
     joinRoom,
     startGame,
