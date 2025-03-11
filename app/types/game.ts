@@ -83,6 +83,7 @@ export interface Noble {
 // 玩家
 export interface Player {
   id: string;
+  clientId?: string;  // Socket.IO的客户端ID
   name: string;
   gems: Record<GemType, number>;
   cards: Card[];

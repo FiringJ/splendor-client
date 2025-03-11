@@ -15,6 +15,7 @@ export function GameSetup() {
   const roomState = useRoomStore(state => state.roomState);
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
 
+  // AI对战
   const handleLocalGame = async () => {
     try {
       console.log('Starting AI game with player count:', playerCount);
@@ -87,7 +88,10 @@ export function GameSetup() {
     navigator.clipboard.writeText(roomId);
   };
 
+  // 判断当前玩家是否是房主
   const isHost = roomState?.hostId === playerId;
+
+  // 判断当前玩家是否可以开始游戏
   const canStartGame = isHost && (roomState?.players?.length ?? 0) >= 2;
 
   return (
