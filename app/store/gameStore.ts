@@ -30,6 +30,7 @@ interface GameStore {
   reset: () => void;
 }
 
+// 游戏状态存储
 export const useGameStore = create<GameStore>((set) => ({
   gameState: null,
   error: null,

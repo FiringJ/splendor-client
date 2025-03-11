@@ -1,12 +1,15 @@
+// 宝石类型，一共6种，包含5种宝石和1种金子
 export type GemType = 'diamond' | 'sapphire' | 'emerald' | 'ruby' | 'onyx' | 'gold';
 
+// 游戏动作类型
 export type GameActionType =
-  | 'TAKE_GEMS'
-  | 'PURCHASE_CARD'
-  | 'RESERVE_CARD'
-  | 'CLAIM_NOBLE'
-  | 'RESTART_GAME';
+  | 'TAKE_GEMS' // 获取宝石
+  | 'PURCHASE_CARD' // 购买卡牌
+  | 'RESERVE_CARD' // 保留卡牌
+  | 'CLAIM_NOBLE' // 领取贵族
+  | 'RESTART_GAME'; // 重新开始游戏
 
+// 拿取宝石
 export interface TakeGemsAction {
   type: 'TAKE_GEMS';
   payload: {
@@ -14,6 +17,7 @@ export interface TakeGemsAction {
   };
 }
 
+// 购买卡牌
 export interface PurchaseCardAction {
   type: 'PURCHASE_CARD';
   payload: {
@@ -22,6 +26,7 @@ export interface PurchaseCardAction {
   };
 }
 
+// 保留卡牌
 export interface ReserveCardAction {
   type: 'RESERVE_CARD';
   payload: {
@@ -30,6 +35,7 @@ export interface ReserveCardAction {
   };
 }
 
+// 领取贵族
 export interface ClaimNobleAction {
   type: 'CLAIM_NOBLE';
   payload: {
@@ -37,11 +43,13 @@ export interface ClaimNobleAction {
   };
 }
 
+// 重新开始游戏
 export interface RestartGameAction {
   type: 'RESTART_GAME';
   payload: Record<string, never>;
 }
 
+// 游戏动作
 export type GameAction =
   | TakeGemsAction
   | PurchaseCardAction
@@ -49,6 +57,7 @@ export type GameAction =
   | ClaimNobleAction
   | RestartGameAction;
 
+// 卡牌
 export interface Card {
   id: string;
   level: 1 | 2 | 3;
@@ -62,6 +71,7 @@ export interface Card {
   };
 }
 
+// 贵族
 export interface Noble {
   id: string;
   points: number;
@@ -70,6 +80,7 @@ export interface Noble {
   image?: string;
 }
 
+// 玩家
 export interface Player {
   id: string;
   name: string;
@@ -78,19 +89,21 @@ export interface Player {
   reservedCards: Card[];
   nobles: Noble[];
   points: number;
+  isAI?: boolean;
 }
 
+// 游戏状态
 export interface GameState {
   players: Array<Player>;
-  currentTurn: string | null;
-  gems: Record<GemType, number>;
+  currentTurn: string | null; // 当前回合玩家ID
+  gems: Record<GemType, number>; // 宝石数量
   cards: {
-    level1: Card[];
-    level2: Card[];
-    level3: Card[];
-    deck1: Card[];
-    deck2: Card[];
-    deck3: Card[];
+    level1: Card[]; // 1级卡牌
+    level2: Card[]; // 2级卡牌
+    level3: Card[]; // 3级卡牌
+    deck1: Card[]; // 1级卡牌堆
+    deck2: Card[]; // 2级卡牌堆
+    deck3: Card[]; // 3级卡牌堆
   };
   nobles: Noble[];
   status: 'waiting' | 'playing' | 'finished';
