@@ -1,17 +1,8 @@
-import { GameState } from './game';
+import { GameState, Player } from './game';
 
 export interface RoomState {
   id: string;
-  players: Array<{
-    id: string;
-    clientId?: string;
-    name: string;
-    gems: Record<string, number>;
-    cards: any[];
-    reservedCards: any[];
-    nobles: any[];
-    points: number;
-  }>;
+  players: Array<Player>;
   hostId: string;
   status: 'waiting' | 'playing' | 'finished';
   gameState: GameState | null;
