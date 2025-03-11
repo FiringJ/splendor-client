@@ -4,22 +4,13 @@ import { useSocket } from '../hooks/useSocket';
 import { GameBoard } from './game/GameBoard';
 import { GameSetup } from './game/GameSetup';
 import { useGameStore } from '../store/gameStore';
-import { useRoomStore } from '../store/roomStore';
 
 export default function GameLayout() {
-  // 初始化socket连接
+  // 初始化socket连接，当前玩家连接到服务端
   useSocket();
   const gameState = useGameStore(state => state.gameState);
-  const isAIEnabled = useGameStore(state => state.isAIEnabled);
   const error = useGameStore(state => state.error);
   const setError = useGameStore(state => state.setError);
-  const roomState = useRoomStore(state => state.roomState);
-  
-  // 检查是否是AI对战模式
-  const isAIGame = isAIEnabled || roomState?.isLocalMode;
-  
-  // 在AI对战模式下，如果出现连接断开的错误，不显示错误提示
-  const displayError = error && !(gameState && isAIGame);
   
   // 关闭错误提示
   const handleCloseError = () => {
@@ -28,7 +19,7 @@ export default function GameLayout() {
   
   return (
     <main className="min-h-screen bg-green-50">
-      {displayError && (
+      {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>
           <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={handleCloseError}>
