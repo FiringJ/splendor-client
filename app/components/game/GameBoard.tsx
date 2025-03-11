@@ -15,7 +15,6 @@ import { GameOverDialog } from './GameOverDialog';
 import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
 import { DiscardGemsDialog } from './DiscardGemsDialog';
-// import { GameTester } from './GameTester';
 
 export const GameBoard = () => {
   const gameState = useGameStore(state => state.gameState);
@@ -147,9 +146,6 @@ export const GameBoard = () => {
               </div>
             </div>
           </div>
-
-          {/* 游戏测试工具 */}
-          {/* {process.env.NODE_ENV === 'development' && <GameTester />} */}
         </div>
       </div>
       <DiscardGemsDialog />
