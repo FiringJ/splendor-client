@@ -7,7 +7,6 @@ import { GameState, GameAction, Player } from '../types/game';
 import { useRoomStore } from '../store/roomStore';
 import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse } from '../types/room';
 import { useSocketStore } from '../store/socketStore';
-import { AIPlayer } from '../lib/game/ai';
 
 // 服务器返回的GameState，其中winner可能是string而非Player对象
 interface ServerGameState extends Omit<GameState, 'players' | 'winner'> {
@@ -92,12 +91,6 @@ export const useSocket = () => {
               `${clientGameState.winner.name}获胜！`,
               () => { } // 空函数，只是用于显示信息
             );
-          }
-
-          // 处理完当前动作后，如果是AI玩家的回合，自动执行AI动作
-          const roomId = useRoomStore.getState().roomId;
-          if (roomId) {
-            setTimeout(() => handleAITurn(roomId), 500);
           }
         }
       });
@@ -200,42 +193,6 @@ export const useSocket = () => {
       throw error;
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 添加一个处理AI行动的新函数
-  const handleAITurn = async (roomId: string) => {
-    // 获取当前游戏状态
-    const gameState = useGameStore.getState().gameState;
-    if (!gameState) return;
-
-    // 检查当前玩家是否为AI
-    const currentPlayerId = gameState.currentTurn;
-    const currentPlayer = gameState.players.find(p => p.id === currentPlayerId);
-
-    // 优先使用isAI属性，如果没有则通过ID或名称判断
-    const isAI = currentPlayer && (
-      currentPlayer.isAI === true ||
-      currentPlayer.id.includes('AI') ||
-      currentPlayer.name.includes('AI')
-    );
-
-    if (isAI) {
-      console.log('AI player turn detected, generating action...');
-
-      // 设置一个小延迟，以便UI有时间更新
-      setTimeout(async () => {
-        try {
-          // 获取AI的下一步操作
-          const aiAction = AIPlayer.getNextAction(gameState);
-          console.log('AI action generated:', aiAction);
-
-          // 执行AI操作
-          await performGameAction(roomId, aiAction);
-        } catch (error) {
-          console.error('Error during AI turn:', error);
-        }
-      }, 1000); // 1秒延迟，可根据需要调整
     }
   };
 
