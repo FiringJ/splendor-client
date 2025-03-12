@@ -33,7 +33,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       return socket;
     }
 
-    const newSocket = io('http://localhost:3001', {
+    const newSocket = io(process.env.NODE_ENV === 'production' ? 'https://splendor-server.vercel.app' : 'http://localhost:3001', {
       withCredentials: true,
       reconnectionAttempts: Infinity,
       timeout: 30000
