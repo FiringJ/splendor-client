@@ -2,7 +2,7 @@
 
 import { useGameStore } from '../../store/gameStore';
 import { useRoomStore } from '../../store/roomStore';
-import { useSocket } from '../../hooks/useSocket';
+// import { useSocket } from '../../hooks/useSocket';
 import { GemType } from '../../types/game';
 import { useState } from 'react';
 
@@ -27,9 +27,9 @@ const gemNameMap: Record<GemType, string> = {
 export function DiscardGemsDialog() {
   const gameState = useGameStore(state => state.gameState);
   const gemsToDiscard = useGameStore(state => state.gemsToDiscard);
-  const hideGemsToDiscard = useGameStore(state => state.hideGemsToDiscard);
+  // const hideGemsToDiscard = useGameStore(state => state.hideGemsToDiscard);
   const roomId = useRoomStore(state => state.roomId);
-  const { performGameAction } = useSocket();
+  // const { performGameAction } = useSocket();
   const [selectedGems, setSelectedGems] = useState<Partial<Record<GemType, number>>>({});
 
   if (!gemsToDiscard?.isOpen || !gameState || !roomId) return null;
@@ -54,18 +54,18 @@ export function DiscardGemsDialog() {
   };
 
   const handleConfirm = async () => {
-    if (remainingToDiscard === 0) {
-      try {
-        await performGameAction(roomId, {
-          type: 'DISCARD_GEMS',
-          playerId: gemsToDiscard.playerId,
-          gems: selectedGems
-        });
-        hideGemsToDiscard();
-      } catch (error) {
-        console.error('Failed to discard gems:', error);
-      }
-    }
+    // if (remainingToDiscard === 0) {
+    //   try {
+    //     await performGameAction(roomId, {
+    //       type: 'DISCARD_GEMS',
+    //       playerId: gemsToDiscard.playerId,
+    //       gems: selectedGems
+    //     });
+    //     hideGemsToDiscard();
+    //   } catch (error) {
+    //     console.error('Failed to discard gems:', error);
+    //   }
+    // }
   };
 
   return (

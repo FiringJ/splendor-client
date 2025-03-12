@@ -14,7 +14,7 @@ import { ActionHistory } from './ActionHistory';
 import { GameOverDialog } from './GameOverDialog';
 import { Alert } from '../../components/ui/Alert';
 import { Spinner } from '../../components/ui/Spinner';
-import { DiscardGemsDialog } from './DiscardGemsDialog';
+// import { DiscardGemsDialog } from './DiscardGemsDialog';
 
 export const GameBoard = () => {
   const gameState = useGameStore(state => state.gameState);
@@ -148,7 +148,7 @@ export const GameBoard = () => {
           </div>
         </div>
       </div>
-      <DiscardGemsDialog />
+      {/* <DiscardGemsDialog /> */}
     </div>
   );
 };
