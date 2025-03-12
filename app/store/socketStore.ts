@@ -38,7 +38,8 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         ? 'wss://106.14.152.40:3000' 
         : 'http://localhost:3001',
       {
-        withCredentials: true,
+        // withCredentials: true,
+        transports: ['websocket'],
         secure: false
       }
     );
