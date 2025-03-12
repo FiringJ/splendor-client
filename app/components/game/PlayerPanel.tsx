@@ -113,8 +113,7 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
                 {isActive && GameValidator.canPurchaseCard(gameState!, {
                   type: 'PURCHASE_CARD',
                   payload: {
-                    cardId: card.id,
-                    level: card.level,
+                    cardId: card.id
                   },
                 }) && (
                     <button
