@@ -35,12 +35,12 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     const newSocket = io(
       process.env.NODE_ENV === 'production' 
-        ? 'wss://splendor-server.vercel.app'  // 使用 wss 协议
+        ? 'wss://splendor-server.vercel.app' 
         : 'http://localhost:3001',
       {
+        path: '/socket.io', // 显式指定路径
+        transports: ['websocket'], // 强制 WebSocket 传输
         withCredentials: true,
-        reconnectionAttempts: Infinity,
-        timeout: 30000
       }
     );
 
