@@ -38,8 +38,6 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         ? 'wss://splendor-server.vercel.app' 
         : 'http://localhost:3001',
       {
-        path: '/socket.io', // 显式指定路径
-        transports: ['websocket'], // 强制 WebSocket 传输
         withCredentials: true,
       }
     );
