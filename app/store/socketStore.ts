@@ -35,7 +35,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     const newSocket = io(
       process.env.NODE_ENV === 'production' 
-        ? 'wss://106.14.158.40:3000' 
+        ? 'wss://106.14.152.40:3000' 
         : 'http://localhost:3001',
       {
         withCredentials: true,
