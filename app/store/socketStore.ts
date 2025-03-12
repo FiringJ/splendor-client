@@ -35,7 +35,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     const newSocket = io(
       process.env.NODE_ENV === 'production' 
-        ? 'wss://splendor-server.vercel.app' 
+        ? 'wss://106.14.158.40:3000' 
         : 'http://localhost:3001',
       {
         withCredentials: true,
