@@ -39,6 +39,7 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
         : 'http://localhost:3001',
       {
         withCredentials: true,
+        secure: false
       }
     );
 
