@@ -33,11 +33,16 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       return socket;
     }
 
-    const newSocket = io(process.env.NODE_ENV === 'production' ? 'https://splendor-server.vercel.app' : 'http://localhost:3001', {
-      withCredentials: true,
-      reconnectionAttempts: Infinity,
-      timeout: 30000
-    });
+    const newSocket = io(
+      process.env.NODE_ENV === 'production' 
+        ? 'wss://splendor-server.vercel.app'  // 使用 wss 协议
+        : 'http://localhost:3001',
+      {
+        withCredentials: true,
+        reconnectionAttempts: Infinity,
+        timeout: 30000
+      }
+    );
 
     // 设置基本事件监听
     newSocket.on('connect', () => {
