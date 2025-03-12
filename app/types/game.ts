@@ -59,11 +59,11 @@ export type GameAction =
 
 // 卡牌
 export interface Card {
-  id: string;
+  id: number;
   level: 1 | 2 | 3;
   points: number;
   gem: GemType;
-  cost: Record<GemType, number>;
+  cost: Partial<Record<GemType, number>>;
   image?: string;
   spritePosition: {
     x: number;  // 精灵图中的x坐标（第几列，从0开始）
@@ -73,10 +73,10 @@ export interface Card {
 
 // 贵族
 export interface Noble {
-  id: string;
+  id: number;
   points: number;
   name: string;
-  requirements: Record<GemType, number>;
+  requirements: Partial<Record<GemType, number>>;
   image?: string;
 }
 
