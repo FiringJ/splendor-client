@@ -12,26 +12,27 @@ export type GameActionType =
 // 拿取宝石
 export interface TakeGemsAction {
   type: 'TAKE_GEMS';
+  playerId?: string; // 可选，如果不存在则使用当前回合的玩家
   payload: {
-    gems: Record<GemType, number>;
+    gems: Partial<Record<GemType, number>>;
   };
 }
 
 // 购买卡牌
 export interface PurchaseCardAction {
   type: 'PURCHASE_CARD';
+  playerId?: string;
   payload: {
-    cardId: string;
-    level: number;
+    cardId: number;
   };
 }
 
 // 保留卡牌
 export interface ReserveCardAction {
   type: 'RESERVE_CARD';
+  playerId?: string;
   payload: {
-    cardId: string;
-    level: number;
+    cardId: number;
   };
 }
 
@@ -39,14 +40,14 @@ export interface ReserveCardAction {
 export interface ClaimNobleAction {
   type: 'CLAIM_NOBLE';
   payload: {
-    nobleId: string;
+    nobleId: number;
   };
 }
 
 // 重新开始游戏
 export interface RestartGameAction {
   type: 'RESTART_GAME';
-  payload: Record<string, never>;
+  payload: Partial<Record<string, never>>;
 }
 
 // 游戏动作

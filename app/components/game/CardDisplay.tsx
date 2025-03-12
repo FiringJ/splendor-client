@@ -24,14 +24,13 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
     deck3: cards?.deck3 ?? [],
   };
 
-  const handleCardClick = (cardId: string, level: number) => {
+  const handleCardClick = (cardId: number) => {
     if (!gameState || disabled) return;
 
     const action = {
       type: 'PURCHASE_CARD' as const,
       payload: {
-        cardId,
-        level,
+        cardId
       },
     };
 
@@ -40,14 +39,13 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
     }
   };
 
-  const handleCardReserve = (cardId: string, level: number) => {
+  const handleCardReserve = (cardId: number) => {
     if (!gameState || disabled) return;
 
     const action = {
       type: 'RESERVE_CARD' as const,
       payload: {
-        cardId,
-        level,
+        cardId
       },
     };
 
@@ -56,21 +54,22 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
     }
   };
 
-  const handleDeckReserve = (level: number) => {
-    if (!gameState || disabled) return;
+  // 先注释掉从牌堆预定的功能
+  // const handleDeckReserve = (level: number) => {
+  //   if (!gameState || disabled) return;
 
-    const action = {
-      type: 'RESERVE_CARD' as const,
-      payload: {
-        cardId: `deck${level}`,
-        level,
-      },
-    };
+  //   const action = {
+  //     type: 'RESERVE_CARD' as const,
+  //     payload: {
+  //       cardId: `deck${level}`,
+  //       level,
+  //     },
+  //   };
 
-    if (GameValidator.canReserveCard(gameState, action)) {
-      onReserve(action);
-    }
-  };
+  //   if (GameValidator.canReserveCard(gameState, action)) {
+  //     onReserve(action);
+  //   }
+  // };
 
   return (
     <div className="flex flex-col gap-4">
@@ -82,8 +81,8 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
             <Card
               key={card.id}
               card={card}
-              onClick={() => handleCardClick(card.id, 3)}
-              onReserve={() => handleCardReserve(card.id, 3)}
+              onClick={() => handleCardClick(card.id)}
+              onReserve={() => handleCardReserve(card.id)}
               disabled={disabled}
             />
           ))}
@@ -92,7 +91,7 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
               <EmptyDeck count={safeCards.deck3.length} />
               {!disabled && (
                 <button
-                  onClick={() => handleDeckReserve(3)}
+                  // onClick={() => handleDeckReserve(3)}
                   className="absolute bottom-2 left-1/2 -translate-x-1/2
                             px-4 py-1 bg-yellow-500 text-white text-sm rounded-lg
                             shadow-md shadow-yellow-500/30
@@ -116,8 +115,8 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
             <Card
               key={card.id}
               card={card}
-              onClick={() => handleCardClick(card.id, 2)}
-              onReserve={() => handleCardReserve(card.id, 2)}
+              onClick={() => handleCardClick(card.id)}
+              onReserve={() => handleCardReserve(card.id)}
               disabled={disabled}
             />
           ))}
@@ -126,7 +125,7 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
               <EmptyDeck count={safeCards.deck2.length} />
               {!disabled && (
                 <button
-                  onClick={() => handleDeckReserve(2)}
+                  // onClick={() => handleDeckReserve(2)}
                   className="absolute bottom-2 left-1/2 -translate-x-1/2
                             px-4 py-1 bg-yellow-500 text-white text-sm rounded-lg
                             shadow-md shadow-yellow-500/30
@@ -150,8 +149,8 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
             <Card
               key={card.id}
               card={card}
-              onClick={() => handleCardClick(card.id, 1)}
-              onReserve={() => handleCardReserve(card.id, 1)}
+              onClick={() => handleCardClick(card.id)}
+              onReserve={() => handleCardReserve(card.id)}
               disabled={disabled}
             />
           ))}
@@ -160,7 +159,7 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
               <EmptyDeck count={safeCards.deck1.length} />
               {!disabled && (
                 <button
-                  onClick={() => handleDeckReserve(1)}
+                  // onClick={() => handleDeckReserve(1)}
                   className="absolute bottom-2 left-1/2 -translate-x-1/2
                             px-4 py-1 bg-yellow-500 text-white text-sm rounded-lg
                             shadow-md shadow-yellow-500/30

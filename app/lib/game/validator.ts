@@ -11,8 +11,8 @@ export class GameValidator {
     // 检查是否是当前玩家的回合
     if (currentPlayer.id !== gameState.currentTurn) return false;
 
-    const { cardId, level } = action.payload;
-    const card = this.findCard(gameState, cardId, level);
+    const { cardId } = action.payload;
+    const card = this.findCard(gameState, cardId);
     if (!card) return false;
 
     return this.hasEnoughResources(currentPlayer, card);
@@ -29,17 +29,17 @@ export class GameValidator {
     // 检查预留卡数量限制
     if (currentPlayer.reservedCards.length >= 3) return false;
 
-    const { cardId, level } = action.payload;
-    // 如果是从牌堆预定
-    if (cardId.startsWith('deck')) {
-      const deckCards = level === 1 ? gameState.cards.deck1 :
-        level === 2 ? gameState.cards.deck2 :
-          level === 3 ? gameState.cards.deck3 : [];
-      return deckCards.length > 0;
-    }
+    const { cardId } = action.payload;
+    // 如果是从牌堆预定（先注释掉从牌堆预定的功能）
+    // if (cardId.startsWith('deck')) {
+    //   const deckCards = level === 1 ? gameState.cards.deck1 :
+    //     level === 2 ? gameState.cards.deck2 :
+    //       level === 3 ? gameState.cards.deck3 : [];
+    //   return deckCards.length > 0;
+    // }
 
     // 如果是预定可见的卡牌
-    const card = this.findCard(gameState, cardId, level);
+    const card = this.findCard(gameState, cardId);
     return !!card;
   }
 
@@ -98,12 +98,15 @@ export class GameValidator {
     return this.meetsNobleRequirements(currentPlayer, noble);
   }
 
-  private static findCard(gameState: GameState, cardId: string, level: number): Card | undefined {
-    const cards = level === 1 ? gameState.cards.level1 :
-      level === 2 ? gameState.cards.level2 :
-        level === 3 ? gameState.cards.level3 : [];
-
-    return cards.find(card => card.id === cardId);
+  private static findCard(gameState: GameState, cardId: number): Card | undefined {
+    // 需要同时在预留区查找
+    const allCards = [
+      ...gameState.cards.level1,
+      ...gameState.cards.level2,
+      ...gameState.cards.level3,
+      ...Array.from(gameState.players.values()).flatMap(p => p.reservedCards)
+    ];
+    return allCards.find(card => card.id === cardId);
   }
 
   private static hasEnoughResources(player: Player, card: Card): boolean {
