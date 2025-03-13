@@ -35,12 +35,12 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
 
     const newSocket = io(
       process.env.NODE_ENV === 'production' 
-        ? 'wss://106.14.152.40:3000' 
+        ? 'https://www.splendor.uno' // 使用域名，不需要指定端口
         : 'http://localhost:3001',
       {
-        // withCredentials: true,
-        transports: ['websocket'],
-        secure: false
+        transports: ['websocket', 'polling'], // 添加 polling 作为备选
+        secure: true, // 启用 SSL
+        rejectUnauthorized: false // 允许自签名证书
       }
     );
 
@@ -80,4 +80,4 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       console.log('Socket event listeners removed');
     }
   }
-})); 
+}));
