@@ -132,40 +132,47 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
             </svg>
             预留卡: {player.reservedCards.length}/3
           </h3>
-          <div className="flex flex-row flex-nowrap overflow-x-hidden h-[60px] items-center justify-center">
-            {player.reservedCards.length > 0 ? (
-              player.reservedCards.map((card, index) => (
-                <div 
-                  key={card.id} 
-                  className={`transform scale-[0.60] origin-center -mx-5 ${index === 0 ? 'ml-0' : ''} ${index === player.reservedCards.length - 1 ? 'mr-0' : ''}`}
-                  style={{zIndex: 10 - index}}
-                >
-                  <Card
-                    card={card}
-                    disabled={!isActive}
-                  />
-                  {isActive && GameValidator.canPurchaseCard(gameState!, {
-                    type: 'PURCHASE_CARD',
-                    payload: {
-                      cardId: card.id
-                    },
-                  }) && (
-                      <button
-                        onClick={() => handlePurchaseReservedCard(card)}
-                        className="absolute -bottom-3 left-1/2 -translate-x-1/2 
-                                px-2 py-0.5 bg-blue-500 text-white text-xs rounded-md
-                                shadow-md shadow-blue-500/30
-                                hover:bg-blue-600 hover:shadow-blue-600/30
-                                active:transform active:scale-95
-                                transition-all duration-200"
-                      >
-                        购买
-                      </button>
-                    )}
-                </div>
-              ))
-            ) : (
-              <span className="text-xs text-blue-400 italic">无预留卡</span>
+          <div className="relative">
+            <div className="flex flex-row overflow-x-auto py-1 min-h-[70px] items-center justify-start space-x-1">
+              {player.reservedCards.length > 0 ? (
+                player.reservedCards.map((card) => (
+                  <div 
+                    key={card.id} 
+                    className="transform scale-[0.65] origin-left flex-shrink-0"
+                    style={{width: '84px', height: '120px'}}
+                  >
+                    <div className="relative">
+                      <Card
+                        card={card}
+                        disabled={!isActive}
+                      />
+                      {isActive && GameValidator.canPurchaseCard(gameState!, {
+                        type: 'PURCHASE_CARD',
+                        payload: {
+                          cardId: card.id
+                        },
+                      }) && (
+                        <button
+                          onClick={() => handlePurchaseReservedCard(card)}
+                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 
+                                  px-2 py-0.5 bg-blue-500 text-white text-xs rounded-md
+                                  shadow-md shadow-blue-500/30
+                                  hover:bg-blue-600 hover:shadow-blue-600/30
+                                  active:transform active:scale-95
+                                  transition-all duration-200"
+                        >
+                          购买
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <span className="flex items-center justify-center w-full h-full text-xs text-blue-400 italic">无预留卡</span>
+              )}
+            </div>
+            {player.reservedCards.length > 0 && (
+              <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-blue-50 to-transparent pointer-events-none"></div>
             )}
           </div>
         </div>

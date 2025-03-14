@@ -103,6 +103,10 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
     const remainingCount = count - selectedCount;
     const isSelected = selectedCount > 0;
     
+    // 黄金宝石无法被选择
+    const isGoldGem = gemType === 'gold';
+    const isDisabled = remainingCount === 0 || disabled || isGoldGem;
+    
     return (
       <div key={gemType} className="flex flex-col items-center">
         <button
@@ -110,16 +114,16 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
             relative w-14 h-14 rounded-full
             bg-gradient-to-br ${gemColorMap[gemType]}
             border
-            ${remainingCount > 0 && !disabled ? 'cursor-pointer transform hover:-translate-y-1 hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}
+            ${remainingCount > 0 && !isDisabled ? 'cursor-pointer transform hover:-translate-y-1 hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}
             ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}
             transition-all duration-300 ease-in-out
             flex items-center justify-center
             shadow-md
             before:content-[''] before:absolute before:inset-[3px] before:rounded-full before:bg-gradient-to-tl before:from-white/20 before:to-transparent before:opacity-80
           `}
-          onClick={() => handleGemClick(gemType)}
-          disabled={remainingCount === 0 || disabled}
-          title={`${gemNameMap[gemType]} (剩余: ${remainingCount}, 已选: ${selectedCount})`}
+          onClick={() => !isGoldGem && handleGemClick(gemType)}
+          disabled={isDisabled}
+          title={`${gemNameMap[gemType]} ${isGoldGem ? '(无法直接获取)' : `(剩余: ${remainingCount}, 已选: ${selectedCount})`}`}
         >
           <span className="text-lg font-bold relative z-10 text-white drop-shadow-md">
             {remainingCount}
@@ -134,6 +138,7 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
         </button>
         <p className="mt-1 text-xs font-medium text-gray-600 truncate w-14 text-center">
           {gemNameMap[gemType]}
+          {isGoldGem && <span className="block text-[10px] text-yellow-600">预留时获得</span>}
         </p>
       </div>
     );

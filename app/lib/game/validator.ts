@@ -29,14 +29,14 @@ export class GameValidator {
     // 检查预留卡数量限制
     if (currentPlayer.reservedCards.length >= 3) return false;
 
-    const { cardId } = action.payload;
+    const { cardId, level } = action.payload;
     // 如果是从牌堆预定（先注释掉从牌堆预定的功能）
-    // if (cardId.startsWith('deck')) {
-    //   const deckCards = level === 1 ? gameState.cards.deck1 :
-    //     level === 2 ? gameState.cards.deck2 :
-    //       level === 3 ? gameState.cards.deck3 : [];
-    //   return deckCards.length > 0;
-    // }
+    if (cardId === -1) {
+      const deckCards = level === 1 ? gameState.cards.deck1 :
+        level === 2 ? gameState.cards.deck2 :
+          level === 3 ? gameState.cards.deck3 : [];
+      return deckCards.length > 0;
+    }
 
     // 如果是预定可见的卡牌
     const card = this.findCard(gameState, cardId);

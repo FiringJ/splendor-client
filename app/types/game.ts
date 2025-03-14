@@ -33,6 +33,7 @@ export interface ReserveCardAction {
   playerId?: string;
   payload: {
     cardId: number;
+    level?: number;
   };
 }
 

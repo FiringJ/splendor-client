@@ -146,13 +146,14 @@ export const GameBoard = () => {
 
             {/* 中间：卡牌区域 */}
             <div className="flex flex-col">
+              
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-2 border border-indigo-100 flex-1 overflow-auto">
               <h3 className="text-sm font-bold text-gray-800 mb-2 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
                 </svg>
                 发展卡
               </h3>
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-2 border border-indigo-100 flex-1 overflow-auto">
                 <CardDisplay
                   cards={gameState.cards}
                   onPurchase={handleAction}
