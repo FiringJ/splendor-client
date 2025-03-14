@@ -38,7 +38,7 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
       relative w-28 h-40 rounded-lg
       bg-gradient-to-br ${cardColors[card.gem]}
       border
-      ${disabled ? 'opacity-60 saturate-50' : isSelected ? 'z-30' : 'hover:shadow-xl hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)]'}
+      ${disabled ? 'opacity-60 saturate-50' : isSelected ? 'z-30' : 'hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)]'}
       transition-all duration-300 ease-out
       cursor-pointer
       ${isSelected ? 'scale-[1.2] z-30 shadow-xl shadow-black/20' : 'shadow-md shadow-black/10'}
