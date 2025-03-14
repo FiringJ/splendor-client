@@ -105,23 +105,28 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
         </div>
       </div>
 
-      {/* 操作按钮 - 只在选中状态下显示 */}
+      {/* 选中状态叠加层 */}
       {isSelected && !disabled && (
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 
-                      flex gap-1 w-28 animate-fade-in">
+        <div className="absolute inset-0 rounded-lg bg-black/30 backdrop-blur-[1px] 
+                      flex flex-col items-center justify-center gap-2
+                      animate-fade-in z-10">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onPurchase?.();
             }}
-            className="flex-1 h-7 bg-blue-500 rounded-md
-                     text-white text-xs font-medium
-                     shadow-md shadow-blue-500/30
+            className="w-3/4 py-1.5 bg-blue-500 rounded-lg
+                     text-white text-sm font-medium
+                     shadow-lg shadow-blue-500/30
                      hover:bg-blue-600 hover:shadow-blue-600/30
-                     focus:ring-1 focus:ring-blue-400 focus:ring-offset-1
+                     focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
                      active:transform active:scale-95
-                     transition-all duration-200"
+                     transition-all duration-200
+                     flex items-center justify-center gap-1"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
             购买
           </button>
           <button
@@ -129,14 +134,18 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
               e.stopPropagation();
               onReserve?.();
             }}
-            className="flex-1 h-7 bg-gray-600 rounded-md
-                     text-white text-xs font-medium
-                     shadow-md shadow-gray-600/30
-                     hover:bg-gray-700 hover:shadow-gray-700/30
-                     focus:ring-1 focus:ring-gray-500 focus:ring-offset-1
+            className="w-3/4 py-1.5 bg-yellow-500 rounded-lg
+                     text-white text-sm font-medium
+                     shadow-lg shadow-yellow-500/30
+                     hover:bg-yellow-600 hover:shadow-yellow-600/30
+                     focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1
                      active:transform active:scale-95
-                     transition-all duration-200"
+                     transition-all duration-200
+                     flex items-center justify-center gap-1"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
             预留
           </button>
         </div>
