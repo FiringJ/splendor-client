@@ -6,8 +6,8 @@ import { useGameStore } from '../../store/gameStore';
 import { GameValidator } from '../../lib/game/validator';
 
 const EmptyDeck = ({ count }: { count: number }) => (
-  <div className="w-32 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-    <span className="text-gray-600">牌堆: {count}</span>
+  <div className="w-28 h-40 bg-gray-200 rounded-lg flex items-center justify-center shadow-inner">
+    <span className="text-gray-600 text-sm font-medium">牌堆: {count}</span>
   </div>
 );
 
@@ -72,11 +72,11 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
   // };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-1">
       {/* Level 3 */}
-      <div className="flex flex-col gap-2">
-        <h4 className="text-lg font-bold text-gray-800">Level 3</h4>
-        <div className="grid grid-cols-4 gap-2">
+      <div className="flex flex-col gap-1 mb-2">
+        <h4 className="text-sm font-bold text-gray-800 bg-gradient-to-r from-purple-100 to-transparent px-2 py-1 rounded-md">Level 3</h4>
+        <div className="grid grid-cols-4 gap-1 mx-auto">
           {safeCards.level3.map((card) => (
             <Card
               key={card.id}
@@ -91,9 +91,8 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
               <EmptyDeck count={safeCards.deck3.length} />
               {!disabled && (
                 <button
-                  // onClick={() => handleDeckReserve(3)}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2
-                            px-4 py-1 bg-yellow-500 text-white text-sm rounded-lg
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2
+                            px-2 py-0.5 bg-yellow-500 text-white text-xs rounded-md
                             shadow-md shadow-yellow-500/30
                             hover:bg-yellow-600 hover:shadow-yellow-600/30
                             active:transform active:scale-95
@@ -108,9 +107,9 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
       </div>
 
       {/* Level 2 */}
-      <div className="flex flex-col gap-2">
-        <h4 className="text-lg font-bold text-gray-800">Level 2</h4>
-        <div className="grid grid-cols-4 gap-2">
+      <div className="flex flex-col gap-1 mb-2">
+        <h4 className="text-sm font-bold text-gray-800 bg-gradient-to-r from-blue-100 to-transparent px-2 py-1 rounded-md">Level 2</h4>
+        <div className="grid grid-cols-4 gap-1 mx-auto">
           {safeCards.level2.map((card) => (
             <Card
               key={card.id}
@@ -125,9 +124,8 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
               <EmptyDeck count={safeCards.deck2.length} />
               {!disabled && (
                 <button
-                  // onClick={() => handleDeckReserve(2)}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2
-                            px-4 py-1 bg-yellow-500 text-white text-sm rounded-lg
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2
+                            px-2 py-0.5 bg-yellow-500 text-white text-xs rounded-md
                             shadow-md shadow-yellow-500/30
                             hover:bg-yellow-600 hover:shadow-yellow-600/30
                             active:transform active:scale-95
@@ -142,9 +140,9 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
       </div>
 
       {/* Level 1 */}
-      <div className="flex flex-col gap-2">
-        <h4 className="text-lg font-bold text-gray-800">Level 1</h4>
-        <div className="grid grid-cols-4 gap-2">
+      <div className="flex flex-col gap-1">
+        <h4 className="text-sm font-bold text-gray-800 bg-gradient-to-r from-green-100 to-transparent px-2 py-1 rounded-md">Level 1</h4>
+        <div className="grid grid-cols-4 gap-1 mx-auto">
           {safeCards.level1.map((card) => (
             <Card
               key={card.id}
@@ -159,9 +157,8 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
               <EmptyDeck count={safeCards.deck1.length} />
               {!disabled && (
                 <button
-                  // onClick={() => handleDeckReserve(1)}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2
-                            px-4 py-1 bg-yellow-500 text-white text-sm rounded-lg
+                  className="absolute bottom-1 left-1/2 -translate-x-1/2
+                            px-2 py-0.5 bg-yellow-500 text-white text-xs rounded-md
                             shadow-md shadow-yellow-500/30
                             hover:bg-yellow-600 hover:shadow-yellow-600/30
                             active:transform active:scale-95

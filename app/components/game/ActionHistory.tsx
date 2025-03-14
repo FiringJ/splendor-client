@@ -1,39 +1,52 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import type { ActionHistoryProps } from '../../types/components';
 import type { GameAction, GemType } from '../../types/game';
 
-const gemColorMap: Record<GemType, string> = {
-  diamond: 'text-gray-500',
-  sapphire: 'text-blue-500',
-  emerald: 'text-green-500',
-  ruby: 'text-red-500',
-  onyx: 'text-gray-800',
-  gold: 'text-yellow-500',
+// 不再使用颜色映射，改为使用图标更直观
+const gemIconMap: Record<GemType, string> = {
+  diamond: '💎',
+  sapphire: '🔷',
+  emerald: '🟢',
+  ruby: '🔴',
+  onyx: '⚫',
+  gold: '🟡',
 };
 
-const gemNameMap: Record<GemType, string> = {
-  diamond: '钻石',
-  sapphire: '蓝宝石',
-  emerald: '祖母绿',
-  ruby: '红宝石',
-  onyx: '玛瑙',
-  gold: '黄金',
+const getActionIcon = (action: GameAction) => {
+  switch (action.type) {
+    case 'TAKE_GEMS':
+      return '💰';
+    case 'PURCHASE_CARD':
+      return '🛒';
+    case 'RESERVE_CARD':
+      return '📝';
+    case 'CLAIM_NOBLE':
+      return '👑';
+    case 'RESTART_GAME':
+      return '🔄';
+    default:
+      return '❓';
+  }
 };
 
 const formatAction = (action: GameAction) => {
   switch (action.type) {
     case 'TAKE_GEMS':
-      return `获取宝石：${Object.entries(action.payload.gems)
+      const gems = Object.entries(action.payload.gems)
         .filter(([, count]) => count > 0)
-        .map(([gem, count]) => `${count} 个${gemNameMap[gem as GemType]}`)
-        .join('、')}`;
+        .map(([gem, count]) => {
+          const gemType = gem as GemType;
+          return `${count}${gemIconMap[gemType]}`;
+        });
+      return `获取宝石：${gems.join(' ')}`;
     case 'PURCHASE_CARD':
-      return `购买卡牌：${action.payload.cardId}`;
+      return `购买卡牌 #${action.payload.cardId}`;
     case 'RESERVE_CARD':
-      return `预定卡牌：${action.payload.cardId}`;
+      return `预定卡牌 #${action.payload.cardId}`;
     case 'CLAIM_NOBLE':
-      return `获得贵族：${action.payload.nobleId}`;
+      return `获得贵族 #${action.payload.nobleId}`;
     case 'RESTART_GAME':
       return '重新开始游戏';
     default:
@@ -42,18 +55,40 @@ const formatAction = (action: GameAction) => {
 };
 
 export const ActionHistory = ({ actions }: ActionHistoryProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // 自动滚动到底部
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [actions]);
+
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 max-h-[400px] overflow-y-auto">
+    <div 
+      ref={scrollRef}
+      className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-1.5 max-h-[150px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+    >
       {actions.length === 0 ? (
-        <div className="text-gray-500 text-center">暂无操作记录</div>
+        <div className="text-gray-500 text-center p-2 italic text-xs">
+          <p>暂无操作记录</p>
+        </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
           {actions.map((action, index) => (
             <div
               key={index}
-              className={`text-sm ${gemColorMap[action.type === 'TAKE_GEMS' ? (Object.entries(action.payload.gems).find(([, count]) => count > 0)?.[0] as GemType) || 'diamond' : 'diamond']} border-b border-gray-100 last:border-b-0 py-2`}
+              className={`
+                text-xs flex items-start gap-1 py-1 border-b border-gray-100 last:border-b-0
+                ${index === actions.length - 1 ? 'font-medium text-blue-700' : 'text-gray-600'}
+              `}
             >
-              {formatAction(action)}
+              <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                {getActionIcon(action)}
+              </div>
+              <div className="flex-1 truncate">
+                {formatAction(action)}
+              </div>
             </div>
           ))}
         </div>

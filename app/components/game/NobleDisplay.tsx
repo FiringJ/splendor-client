@@ -24,14 +24,25 @@ export const NobleDisplay = ({ nobles }: NobleDisplayProps) => {
   // };
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {nobles.map((noble) => (
-        <Noble
-          key={noble.id}
-          noble={noble}
-          // onClick={() => handleNobleClick(noble.id)}
-        />
-      ))}
+    <div className="flex flex-col">
+      {nobles.length === 0 ? (
+        <div className="p-2 text-center text-purple-500 italic text-sm">
+          <p>目前没有可用的贵族</p>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center">
+          <div className="flex flex-wrap gap-2 justify-center">
+            {nobles.map((noble) => (
+              <div key={noble.id} className="transform hover:scale-105 transition-transform duration-300">
+                <Noble
+                  noble={noble}
+                  // onClick={() => handleNobleClick(noble.id)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }; 

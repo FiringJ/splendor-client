@@ -13,12 +13,12 @@ interface CardProps {
 }
 
 const cardColors: Record<GemType, string> = {
-  diamond: 'from-gray-100 to-gray-200 border-gray-300',
-  sapphire: 'from-blue-100 to-blue-200 border-blue-300',
-  emerald: 'from-green-100 to-green-200 border-green-300',
-  ruby: 'from-red-100 to-red-200 border-red-300',
-  onyx: 'from-gray-700 to-gray-800 border-gray-900',
-  gold: 'from-yellow-100 to-yellow-200 border-yellow-300'
+  diamond: 'from-gray-100 to-gray-300 border-gray-300',
+  sapphire: 'from-blue-300 to-blue-600 border-blue-300',
+  emerald: 'from-green-300 to-green-600 border-green-300',
+  ruby: 'from-red-300 to-red-600 border-red-300',
+  onyx: 'from-gray-600 to-gray-900 border-gray-700',
+  gold: 'from-yellow-300 to-yellow-500 border-yellow-300'
 };
 
 const gemColors: Record<GemType, string> = {
@@ -35,16 +35,20 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
     <div
       onClick={onClick}
       className={`
-      relative w-32 h-44 rounded-xl
+      relative w-28 h-40 rounded-lg
       bg-gradient-to-br ${cardColors[card.gem]}
-      border-2
-      ${disabled ? 'opacity-50' : isSelected ? '' : 'hover:shadow-2xl transform hover:-translate-y-1 hover:border-opacity-70'}
-      transition-all duration-300 ease-in-out
+      border
+      ${disabled ? 'opacity-60 saturate-50' : isSelected ? 'z-30' : 'hover:shadow-xl hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)]'}
+      transition-all duration-300 ease-out
       cursor-pointer
-      ${isSelected ? 'scale-150 z-50' : ''}
+      ${isSelected ? 'scale-[1.2] z-30 shadow-xl shadow-black/20' : 'shadow-md shadow-black/10'}
+      group
     `}>
       {/* 卡片内容容器 */}
-      <div className="relative w-full h-full overflow-hidden rounded-xl backdrop-blur-sm">
+      <div className="relative w-full h-full overflow-hidden rounded-lg backdrop-blur-sm">
+        {/* 卡片发光效果 */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
         {/* 卡牌图案 */}
         <div
           className="absolute inset-0 bg-[url('/images/cards.webp')] bg-no-repeat"
@@ -57,19 +61,19 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
         />
 
         {/* 卡片顶部信息 */}
-        <div className="absolute top-2 right-2 left-2 flex justify-between items-center h-7 px-1
-                      bg-white bg-opacity-50 backdrop-blur-sm rounded-lg">
+        <div className="absolute top-1.5 right-1.5 left-1.5 flex justify-between items-center h-6 px-1.5
+                      bg-white/50 backdrop-blur-sm rounded-md shadow-sm">
           {card.points > 0 && (
-            <div className="w-6 h-6 rounded-full 
-                        bg-white shadow-sm
+            <div className="w-5 h-5 rounded-full 
+                        bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-sm
                         flex items-center justify-center
-                        text-sm font-bold">
-              <span className="text-yellow-600">
+                        text-xs font-bold border border-yellow-200">
+              <span className="text-white drop-shadow-sm">
                 {card.points}
               </span>
             </div>
           )}
-          <div className="w-6 h-6 bg-[url('/images/gems.webp')] bg-no-repeat ml-auto"
+          <div className="w-5 h-5 bg-[url('/images/gems.webp')] bg-no-repeat ml-auto"
             style={{
               backgroundSize: '500% 100%',
               backgroundPosition: `${getGemSpritePosition(card.gem)}% 0%`
@@ -77,14 +81,21 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
           />
         </div>
 
+        {/* 卡片等级标记 */}
+        <div className="absolute top-2.5 left-1.5">
+          {Array(card.level).fill(0).map((_, i) => (
+            <div key={i} className="w-1 h-1 bg-white rounded-full mb-0.5 shadow-sm"></div>
+          ))}
+        </div>
+
         {/* 费用区域 */}
-        <div className="absolute bottom-2 left-1 right-1 
-                      bg-white bg-opacity-50 backdrop-blur-sm rounded-lg p-0.5">
-          <div className="flex items-center justify-start gap-0.5">
+        <div className="absolute bottom-1.5 left-1 right-1 
+                      bg-white/50 backdrop-blur-sm rounded-md p-1 shadow-sm">
+          <div className="flex flex-wrap items-center justify-start gap-0.5">
             {Object.entries(card.cost).map(([gem, count]) => (
               <div key={gem}
-                className="flex items-center gap-0.5 bg-white bg-opacity-70 
-                            rounded-sm px-0.5">
+                className="flex items-center gap-0.5 bg-white/70 
+                            rounded px-0.5 py-0.5 shadow-sm">
                 <div className={`w-3 h-3 rounded-full ${gemColors[gem as GemType]} 
                               shadow-sm`} />
                 <span className="text-xs font-semibold">{count}</span>
@@ -96,17 +107,18 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
 
       {/* 操作按钮 - 只在选中状态下显示 */}
       {isSelected && !disabled && (
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 
-                      flex gap-2 w-32">
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 
+                      flex gap-1 w-28 animate-fade-in">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onPurchase?.();
             }}
-            className="flex-1 h-8 bg-blue-500 rounded-lg
-                     text-white text-sm font-medium
+            className="flex-1 h-7 bg-blue-500 rounded-md
+                     text-white text-xs font-medium
                      shadow-md shadow-blue-500/30
                      hover:bg-blue-600 hover:shadow-blue-600/30
+                     focus:ring-1 focus:ring-blue-400 focus:ring-offset-1
                      active:transform active:scale-95
                      transition-all duration-200"
           >
@@ -117,10 +129,11 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
               e.stopPropagation();
               onReserve?.();
             }}
-            className="flex-1 h-8 bg-gray-600 rounded-lg
-                     text-white text-sm font-medium
+            className="flex-1 h-7 bg-gray-600 rounded-md
+                     text-white text-xs font-medium
                      shadow-md shadow-gray-600/30
                      hover:bg-gray-700 hover:shadow-gray-700/30
+                     focus:ring-1 focus:ring-gray-500 focus:ring-offset-1
                      active:transform active:scale-95
                      transition-all duration-200"
           >
