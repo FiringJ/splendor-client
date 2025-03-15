@@ -7,6 +7,7 @@ export type GameActionType =
   | 'PURCHASE_CARD' // 购买卡牌
   | 'RESERVE_CARD' // 保留卡牌
   | 'CLAIM_NOBLE' // 领取贵族
+  | 'DISCARD_GEMS' // 丢弃宝石
   | 'RESTART_GAME'; // 重新开始游戏
 
 // 拿取宝石
@@ -45,10 +46,21 @@ export interface ClaimNobleAction {
   };
 }
 
+// 丢弃宝石
+export interface DiscardGemsAction {
+  type: 'DISCARD_GEMS';
+  playerId?: string;
+  payload: {
+    gems: Partial<Record<GemType, number>>;
+  };
+}
+
 // 重新开始游戏
 export interface RestartGameAction {
   type: 'RESTART_GAME';
-  payload: Partial<Record<string, never>>;
+  payload: {
+    players?: string[];
+  };
 }
 
 // 游戏动作
@@ -57,6 +69,7 @@ export type GameAction =
   | PurchaseCardAction
   | ReserveCardAction
   | ClaimNobleAction
+  | DiscardGemsAction
   | RestartGameAction;
 
 // 卡牌
@@ -95,6 +108,12 @@ export interface Player {
   isAI?: boolean;
 }
 
+// 等待丢弃宝石的状态
+export interface PendingDiscard {
+  playerId: string;
+  gemsCount: number;
+}
+
 // 游戏状态
 export interface GameState {
   players: Array<Player>;
@@ -114,4 +133,5 @@ export interface GameState {
   lastRoundStartPlayer: string | null;
   winner: Player | null;
   actions: GameAction[];
+  pendingDiscard?: PendingDiscard; // 等待丢弃宝石的状态
 } 

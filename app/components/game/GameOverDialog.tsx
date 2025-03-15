@@ -2,18 +2,29 @@
 
 import type { GameOverDialogProps } from '../../types/components';
 import { useGameStore } from '../../store/gameStore';
+import { useState } from 'react';
 
 export const GameOverDialog = ({ onPlayAgain }: GameOverDialogProps) => {
   const gameState = useGameStore(state => state.gameState);
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!gameState?.winner) return null;
 
-  const handlePlayAgain = () => {
-    const action = {
-      type: 'RESTART_GAME' as const,
-      payload: {},
-    };
-    onPlayAgain(action);
+  const handlePlayAgain = async () => {
+    try {
+      setIsLoading(true);
+      const action = {
+        type: 'RESTART_GAME' as const,
+        payload: {
+          players: Array.from(gameState.players.values()).map(p => p.id)
+        }
+      };
+      await onPlayAgain(action);
+    } catch (error) {
+      console.error('重新开始游戏失败:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -26,9 +37,10 @@ export const GameOverDialog = ({ onPlayAgain }: GameOverDialogProps) => {
         <div className="flex justify-center">
           <button
             onClick={handlePlayAgain}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            disabled={isLoading}
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
           >
-            再来一局
+            {isLoading ? '处理中...' : '再来一局'}
           </button>
         </div>
       </div>

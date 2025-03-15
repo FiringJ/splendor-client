@@ -33,7 +33,7 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
   return (
     <div 
       className={`
-        relative w-28 h-40 rounded-lg
+        relative w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 rounded-lg
         border border-gray-300
         ${!count ? 'opacity-40 cursor-not-allowed' : 
           'cursor-pointer hover:shadow-lg transition-all duration-300'}
@@ -228,14 +228,14 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
   return (
     <div className="flex flex-col gap-3 max-w-6xl mx-auto">
       {/* Level 3 - 高级卡牌 */}
-      <div className="bg-gradient-to-r from-purple-50 to-transparent p-4 rounded-lg shadow-sm">
-        <h4 className="text-base font-bold text-purple-800 mb-3 flex items-center">
+      <div className="bg-gradient-to-r from-purple-50 to-transparent p-2 md:p-4 rounded-lg shadow-sm">
+        <h4 className="text-base font-bold text-purple-800 mb-2 md:mb-3 flex items-center">
           <span className="w-6 h-6 mr-2 bg-purple-100 rounded-full flex items-center justify-center text-purple-700">3</span>
           高级卡牌
         </h4>
-        <div className="flex items-start justify-center">
+        <div className="flex items-start">
           {/* 牌堆 */}
-          <div className="flex-shrink-0 mr-8">
+          <div className="flex-shrink-0 mr-2 md:mr-8">
             <DeckCard 
               level={3} 
               count={safeCards.deck3.length}
@@ -244,16 +244,16 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
           </div>
           
           {/* 卡牌展示区 */}
-          <div className="grid grid-cols-4 gap-4 justify-items-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 justify-items-center w-full">
             {safeCards.level3.map((card) => (
               <div key={card.id}>
                 {renderCardWithHoverControls(card)}
               </div>
             ))}
             {/* 填充空位保持布局 */}
-            {safeCards.level3.length < 4 && 
-              Array.from({ length: 4 - safeCards.level3.length }).map((_, i) => (
-                <div key={`empty-${i}`} className="w-28 h-40 bg-gray-100/50 rounded-lg border border-dashed border-gray-200"></div>
+            {safeCards.level3.length < (window.innerWidth < 768 ? 2 : 4) && 
+              Array.from({ length: (window.innerWidth < 768 ? 2 : 4) - safeCards.level3.length }).map((_, i) => (
+                <div key={`empty-${i}`} className="w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 bg-gray-100/50 rounded-lg border border-dashed border-gray-200"></div>
               ))
             }
           </div>
@@ -261,14 +261,14 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
       </div>
 
       {/* Level 2 - 中级卡牌 */}
-      <div className="bg-gradient-to-r from-blue-50 to-transparent p-4 rounded-lg shadow-sm">
-        <h4 className="text-base font-bold text-blue-800 mb-3 flex items-center">
+      <div className="bg-gradient-to-r from-blue-50 to-transparent p-2 md:p-4 rounded-lg shadow-sm">
+        <h4 className="text-base font-bold text-blue-800 mb-2 md:mb-3 flex items-center">
           <span className="w-6 h-6 mr-2 bg-blue-100 rounded-full flex items-center justify-center text-blue-700">2</span>
           中级卡牌
         </h4>
-        <div className="flex items-start justify-center">
+        <div className="flex items-start">
           {/* 牌堆 */}
-          <div className="flex-shrink-0 mr-8">
+          <div className="flex-shrink-0 mr-2 md:mr-8">
             <DeckCard 
               level={2}
               count={safeCards.deck2.length}
@@ -277,16 +277,16 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
           </div>
           
           {/* 卡牌展示区 */}
-          <div className="grid grid-cols-4 gap-4 justify-items-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 justify-items-center w-full">
             {safeCards.level2.map((card) => (
               <div key={card.id}>
                 {renderCardWithHoverControls(card)}
               </div>
             ))}
             {/* 填充空位保持布局 */}
-            {safeCards.level2.length < 4 && 
-              Array.from({ length: 4 - safeCards.level2.length }).map((_, i) => (
-                <div key={`empty-${i}`} className="w-28 h-40 bg-gray-100/50 rounded-lg border border-dashed border-gray-200"></div>
+            {safeCards.level2.length < (window.innerWidth < 768 ? 2 : 4) && 
+              Array.from({ length: (window.innerWidth < 768 ? 2 : 4) - safeCards.level2.length }).map((_, i) => (
+                <div key={`empty-${i}`} className="w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 bg-gray-100/50 rounded-lg border border-dashed border-gray-200"></div>
               ))
             }
           </div>
@@ -294,14 +294,14 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
       </div>
 
       {/* Level 1 - 初级卡牌 */}
-      <div className="bg-gradient-to-r from-green-50 to-transparent p-4 rounded-lg shadow-sm">
-        <h4 className="text-base font-bold text-green-800 mb-3 flex items-center">
+      <div className="bg-gradient-to-r from-green-50 to-transparent p-2 md:p-4 rounded-lg shadow-sm">
+        <h4 className="text-base font-bold text-green-800 mb-2 md:mb-3 flex items-center">
           <span className="w-6 h-6 mr-2 bg-green-100 rounded-full flex items-center justify-center text-green-700">1</span>
           初级卡牌
         </h4>
-        <div className="flex items-start justify-center">
+        <div className="flex items-start">
           {/* 牌堆 */}
-          <div className="flex-shrink-0 mr-8">
+          <div className="flex-shrink-0 mr-2 md:mr-8">
             <DeckCard 
               level={1} 
               count={safeCards.deck1.length}
@@ -310,16 +310,16 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
           </div>
           
           {/* 卡牌展示区 */}
-          <div className="grid grid-cols-4 gap-4 justify-items-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 justify-items-center w-full">
             {safeCards.level1.map((card) => (
               <div key={card.id}>
                 {renderCardWithHoverControls(card)}
               </div>
             ))}
             {/* 填充空位保持布局 */}
-            {safeCards.level1.length < 4 && 
-              Array.from({ length: 4 - safeCards.level1.length }).map((_, i) => (
-                <div key={`empty-${i}`} className="w-28 h-40 bg-gray-100/50 rounded-lg border border-dashed border-gray-200"></div>
+            {safeCards.level1.length < (window.innerWidth < 768 ? 2 : 4) && 
+              Array.from({ length: (window.innerWidth < 768 ? 2 : 4) - safeCards.level1.length }).map((_, i) => (
+                <div key={`empty-${i}`} className="w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 bg-gray-100/50 rounded-lg border border-dashed border-gray-200"></div>
               ))
             }
           </div>

@@ -35,7 +35,7 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
     <div
       onClick={onClick}
       className={`
-      relative w-28 h-40 rounded-lg
+      relative w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 rounded-lg
       bg-gradient-to-br ${cardColors[card.gem]}
       border
       ${disabled ? 'opacity-60 saturate-50' : isSelected ? 'z-30' : 'hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)]'}
@@ -61,19 +61,19 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
         />
 
         {/* 卡片顶部信息 */}
-        <div className="absolute top-1.5 right-1.5 left-1.5 flex justify-between items-center h-6 px-1.5
+        <div className="absolute top-1 right-1 left-1 md:top-1.5 md:right-1.5 md:left-1.5 flex justify-between items-center h-5 md:h-6 px-1 md:px-1.5
                       bg-white/50 backdrop-blur-sm rounded-md shadow-sm">
           {card.points > 0 && (
-            <div className="w-5 h-5 rounded-full 
+            <div className="w-4 h-4 md:w-5 md:h-5 rounded-full 
                         bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-sm
                         flex items-center justify-center
-                        text-xs font-bold border border-yellow-200">
+                        text-[10px] md:text-xs font-bold border border-yellow-200">
               <span className="text-white drop-shadow-sm">
                 {card.points}
               </span>
             </div>
           )}
-          <div className="w-5 h-5 bg-[url('/images/gems.webp')] bg-no-repeat ml-auto"
+          <div className="w-4 h-4 md:w-5 md:h-5 bg-[url('/images/gems.webp')] bg-no-repeat ml-auto"
             style={{
               backgroundSize: '500% 100%',
               backgroundPosition: `${getGemSpritePosition(card.gem)}% 0%`
@@ -82,23 +82,23 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
         </div>
 
         {/* 卡片等级标记 */}
-        <div className="absolute top-2.5 left-1.5">
+        <div className="absolute top-2 left-1 md:left-1.5">
           {Array(card.level).fill(0).map((_, i) => (
             <div key={i} className="w-1 h-1 bg-white rounded-full mb-0.5 shadow-sm"></div>
           ))}
         </div>
 
         {/* 费用区域 */}
-        <div className="absolute bottom-1.5 left-1 right-1 
+        <div className="absolute bottom-1 left-1 right-1 md:bottom-1.5 
                       bg-white/50 backdrop-blur-sm rounded-md p-1 shadow-sm">
           <div className="flex flex-wrap items-center justify-start gap-0.5">
             {Object.entries(card.cost).map(([gem, count]) => (
               <div key={gem}
                 className="flex items-center gap-0.5 bg-white/70 
                             rounded px-0.5 py-0.5 shadow-sm">
-                <div className={`w-3 h-3 rounded-full ${gemColors[gem as GemType]} 
+                <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${gemColors[gem as GemType]} 
                               shadow-sm`} />
-                <span className="text-xs font-semibold">{count}</span>
+                <span className="text-[10px] md:text-xs font-semibold">{count}</span>
               </div>
             ))}
           </div>
@@ -115,8 +115,8 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
               e.stopPropagation();
               onPurchase?.();
             }}
-            className="w-3/4 py-1.5 bg-blue-500 rounded-lg
-                     text-white text-sm font-medium
+            className="w-3/4 py-1 md:py-1.5 bg-blue-500 rounded-md md:rounded-lg
+                     text-white text-[10px] md:text-sm font-medium
                      shadow-lg shadow-blue-500/30
                      hover:bg-blue-600 hover:shadow-blue-600/30
                      focus:ring-2 focus:ring-blue-400 focus:ring-offset-1
@@ -124,7 +124,7 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
                      transition-all duration-200
                      flex items-center justify-center gap-1"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             购买
@@ -134,8 +134,8 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
               e.stopPropagation();
               onReserve?.();
             }}
-            className="w-3/4 py-1.5 bg-yellow-500 rounded-lg
-                     text-white text-sm font-medium
+            className="w-3/4 py-1 md:py-1.5 bg-yellow-500 rounded-md md:rounded-lg
+                     text-white text-[10px] md:text-sm font-medium
                      shadow-lg shadow-yellow-500/30
                      hover:bg-yellow-600 hover:shadow-yellow-600/30
                      focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1
@@ -143,7 +143,7 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
                      transition-all duration-200
                      flex items-center justify-center gap-1"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
             预留

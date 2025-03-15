@@ -106,6 +106,16 @@ const formatAction = (action: GameAction, gameState: GameStateType | null) => {
       
     case 'RESTART_GAME':
       return '重新开始游戏';
+    
+    case 'DISCARD_GEMS': {
+      const gems = Object.entries(action.payload.gems)
+        .filter(([, count]) => count > 0)
+        .map(([gem, count]) => {
+          const gemType = gem as GemType;
+          return `${count}${gemIconMap[gemType]}`;
+        });
+      return `丢弃宝石：${gems.join(' ')}`;
+    }
       
     default:
       return '未知操作';

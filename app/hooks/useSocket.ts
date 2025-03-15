@@ -137,7 +137,7 @@ export const useSocket = () => {
   }, []);
 
   // 创建房间
-  const createRoom = async (playerId: string) => {
+  const createRoom = async (playerId: string, playerName: string = '玩家') => {
     setLoading(true);
     try {
       if (!socket) {
@@ -145,11 +145,11 @@ export const useSocket = () => {
       }
 
       return new Promise<string>((resolve, reject) => {
-        socket.emit('createRoom', { playerId }, (response: CreateRoomResponse) => {
+        socket.emit('createRoom', { playerId, playerName }, (response: CreateRoomResponse) => {
           if (response.roomId) {
             setRoomId(response.roomId);
             setRoomState(response.room);
-            setPlayer(playerId, 'Player 1');
+            setPlayer(playerId, playerName);
             resolve(response.roomId);
           } else {
             reject(new Error('Failed to create room'));
@@ -165,7 +165,7 @@ export const useSocket = () => {
   };
 
   // 加入房间
-  const joinRoom = async (roomId: string, playerId: string, isAI: boolean = false) => {
+  const joinRoom = async (roomId: string, playerId: string, isAI: boolean = false, playerName: string = '玩家') => {
     setLoading(true);
     try {
       if (!socket) {
@@ -173,14 +173,13 @@ export const useSocket = () => {
       }
 
       return new Promise<JoinRoomResponse>((resolve, reject) => {
-        socket.emit('joinRoom', { roomId, playerId, isAI }, (response: JoinRoomResponse) => {
+        socket.emit('joinRoom', { roomId, playerId, isAI, playerName }, (response: JoinRoomResponse) => {
           if (response.success && response.room) {
             setRoomId(roomId);
             setRoomState(response.room);
             // 只有当不是AI玩家时，才更新当前玩家信息
             if (!isAI) {
-              const playerNumber = response.room.players.length;
-              setPlayer(playerId, `Player ${playerNumber}`);
+              setPlayer(playerId, playerName);
             }
             resolve(response);
           } else {
@@ -254,7 +253,7 @@ export const useSocket = () => {
             if (response.code === 'GEMS_OVERFLOW') {
               const { currentTotal, playerId } = response.data || {};
               if (currentTotal !== undefined && playerId) {
-                useGameStore.getState().showGemsToDiscard(currentTotal, playerId);
+                useGameStore.getState().showGemsToDiscard(playerId, currentTotal);
                 resolve();
               } else {
                 reject(new Error('无效的GEMS_OVERFLOW响应数据'));

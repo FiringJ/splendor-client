@@ -2,8 +2,7 @@
 
 import { GemType } from '../../types/game';
 import { useGameStore } from '../../store/gameStore';
-import { debounce } from 'lodash';
-import { useCallback } from 'react';
+import { useState } from 'react';
 
 interface GemTokenProps {
   gems?: Partial<Record<GemType, number>>;
@@ -32,18 +31,56 @@ const gemNameMap: Record<GemType, string> = {
 
 export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenProps) => {
   const selectedGems = useGameStore(state => state.selectedGems);
-  const selectGem = useGameStore(state => state.selectGem);
+  const addSelectedGem = useGameStore(state => state.addSelectedGem);
+  const removeSelectedGem = useGameStore(state => state.removeSelectedGem);
+  const loading = useGameStore(state => state.loading);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 使用 useCallback 包装防抖函数，避免重复创建
-  const handleGemClick = useCallback((gemType: GemType) => {
-    const debouncedFn = debounce(() => {
-      if (!disabled) {
-        selectGem(gemType);
+  const handleGemClick = (gemType: GemType) => {
+    if (disabled || loading || isSubmitting) return;
+
+    // 检查同色宝石是否已经选了2个
+    const currentCount = selectedGems[gemType] || 0;
+    if (currentCount >= 2) return;
+
+    // 检查已选的不同宝石颜色数量
+    const differentColors = Object.keys(selectedGems).length;
+    const totalSelected = Object.values(selectedGems).reduce((a, b) => a + b, 0);
+
+    // 如果选中的宝石种类已有3种且不是已选择的宝石
+    if (differentColors >= 3 && !selectedGems[gemType]) return;
+
+    // 如果已经选了2个同色宝石，不能再选其他的
+    if (Object.values(selectedGems).some(count => count === 2) && 
+        (!selectedGems[gemType] || selectedGems[gemType] === 0)) return;
+
+    // 如果总选择超过3个
+    if (totalSelected >= 3 && !selectedGems[gemType]) return;
+
+    addSelectedGem(gemType);
+  };
+
+  const handleGemRightClick = (gemType: GemType, e: React.MouseEvent) => {
+    e.preventDefault(); // 防止弹出右键菜单
+    if (disabled || loading || isSubmitting) return;
+    
+    const currentCount = selectedGems[gemType] || 0;
+    if (currentCount > 0) {
+      removeSelectedGem(gemType);
+    }
+    return false;
+  };
+
+  const handleConfirm = async () => {
+    if (onConfirm && !disabled && !loading && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onConfirm();
+      } finally {
+        setIsSubmitting(false);
       }
-    }, 20);
-    debouncedFn();
-    return () => debouncedFn.cancel();
-  }, [disabled, selectGem]);
+    }
+  };
 
   const hasSelectedGems = Object.values(selectedGems).some(count => count > 0);
   
@@ -74,8 +111,10 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
                       active:shadow-sm
                       transform active:scale-95
                       transition-all duration-200
-                      font-medium"
+                      font-medium
+                      disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onCancel}
+            disabled={loading || isSubmitting}
           >
             取消
           </button>
@@ -87,10 +126,12 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
                       active:shadow-sm
                       transform active:scale-95
                       transition-all duration-200
-                      font-medium"
-            onClick={onConfirm}
+                      font-medium
+                      disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleConfirm}
+            disabled={loading || isSubmitting}
           >
-            确认
+            {isSubmitting ? '处理中...' : '确认'}
           </button>
         </div>
       )}
@@ -105,7 +146,7 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
     
     // 黄金宝石无法被选择
     const isGoldGem = gemType === 'gold';
-    const isDisabled = remainingCount === 0 || disabled || isGoldGem;
+    const isDisabled = remainingCount === 0 || disabled || isGoldGem || loading || isSubmitting;
     
     return (
       <div key={gemType} className="flex flex-col items-center">
@@ -121,9 +162,10 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
             shadow-md
             before:content-[''] before:absolute before:inset-[3px] before:rounded-full before:bg-gradient-to-tl before:from-white/20 before:to-transparent before:opacity-80
           `}
-          onClick={() => !isGoldGem && handleGemClick(gemType)}
+          onClick={() => !isDisabled && handleGemClick(gemType)}
+          onContextMenu={(e) => !isDisabled && handleGemRightClick(gemType, e)}
           disabled={isDisabled}
-          title={`${gemNameMap[gemType]} ${isGoldGem ? '(无法直接获取)' : `(剩余: ${remainingCount}, 已选: ${selectedCount})`}`}
+          title={`${gemNameMap[gemType]} ${isGoldGem ? '(无法直接获取)' : `(剩余: ${remainingCount}, 已选: ${selectedCount})`}${isSelected ? '，右键点击减少' : ''}`}
         >
           <span className="text-lg font-bold relative z-10 text-white drop-shadow-md">
             {remainingCount}

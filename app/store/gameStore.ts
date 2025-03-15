@@ -1,33 +1,47 @@
+'use client';
+
 import { create } from 'zustand';
 import { GameState, GemType } from '../types/game';
-import { GameValidator } from '../lib/game/validator';
+
+interface ConfirmDialogState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+}
+
+interface GemsToDiscardState {
+  isOpen: boolean;
+  playerId: string;
+  gemsToDiscard: number;
+}
 
 interface GameStore {
   gameState: GameState | null;
   error: string | null;
   loading: boolean;
-  selectedGems: Partial<Record<GemType, number>>;
-  gemsToDiscard: {
-    isOpen: boolean;
-    currentTotal: number;
-    playerId: string;
-  } | null;
-  confirmDialog: {
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: () => void;
-  } | null;
-  setGameState: (gameState: GameState) => void;
-  setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
+  selectedGems: Partial<Record<GemType, number>>;
+  confirmDialog: ConfirmDialogState | null;
+  gemsToDiscard: GemsToDiscardState | null;
+
+  // 更新游戏状态
+  setGameState: (gameState: GameState) => void;
+  // 设置错误信息
+  setError: (error: string | null) => void;
+
+  // 宝石选择相关
+  addSelectedGem: (gemType: GemType) => void;
+  removeSelectedGem: (gemType: GemType) => void;
+  clearSelectedGems: () => void;
+
+  // 确认弹窗相关
   showConfirm: (title: string, message: string, onConfirm: () => void) => void;
   hideConfirm: () => void;
-  selectGem: (gemType: GemType) => void;
-  clearSelectedGems: () => void;
-  showGemsToDiscard: (currentTotal: number, playerId: string) => void;
+
+  // 丢弃宝石相关
+  showGemsToDiscard: (playerId: string, gemsToDiscard: number) => void;
   hideGemsToDiscard: () => void;
-  reset: () => void;
 }
 
 // 游戏状态存储
@@ -36,85 +50,56 @@ export const useGameStore = create<GameStore>((set) => ({
   error: null,
   loading: false,
   selectedGems: {},
-  gemsToDiscard: null,
   confirmDialog: null,
+  gemsToDiscard: null,
 
-  setGameState: (gameState) => {
-    set({ gameState, error: null });
-  },
+  setLoading: (loading: boolean) => set({ loading }),
 
-  setError: (error) => {
-    set({ error });
-  },
+  setGameState: (gameState: GameState) => set({ gameState }),
 
-  setLoading: (loading) => {
-    set({ loading });
-  },
+  setError: (error: string | null) => set({ error }),
 
-  showConfirm: (title, message, onConfirm) => {
+  addSelectedGem: (gemType: GemType) =>
+    set((state) => {
+      const newSelectedGems = { ...state.selectedGems };
+      newSelectedGems[gemType] = (newSelectedGems[gemType] || 0) + 1;
+      return { selectedGems: newSelectedGems };
+    }),
+
+  removeSelectedGem: (gemType: GemType) =>
+    set((state) => {
+      const newSelectedGems = { ...state.selectedGems };
+      if (newSelectedGems[gemType] && newSelectedGems[gemType]! > 0) {
+        newSelectedGems[gemType] = newSelectedGems[gemType]! - 1;
+        if (newSelectedGems[gemType] === 0) {
+          delete newSelectedGems[gemType];
+        }
+      }
+      return { selectedGems: newSelectedGems };
+    }),
+
+  clearSelectedGems: () => set({ selectedGems: {} }),
+
+  showConfirm: (title: string, message: string, onConfirm: () => void) =>
     set({
       confirmDialog: {
         isOpen: true,
         title,
         message,
-        onConfirm
-      }
-    });
-  },
+        onConfirm,
+      },
+    }),
 
-  hideConfirm: () => {
-    set({ confirmDialog: null });
-  },
+  hideConfirm: () => set({ confirmDialog: null }),
 
-  selectGem: (gemType) => {
-    set((state) => {
-      if (!state.gameState) return state;
-
-      const currentPlayer = state.gameState!.players.find(p => p.id === state.gameState!.currentTurn);
-      if (!currentPlayer) return state;
-
-      // 验证新的宝石选择是否有效
-      const { isValid, error, updatedGems } = GameValidator.validateGemSelection(
-        state.gameState,
-        state.selectedGems,
-        gemType
-      );
-
-      if (!isValid) {
-        set({ error });
-        return state;
-      }
-
-      return { selectedGems: updatedGems, error: null };
-    });
-  },
-
-  clearSelectedGems: () => {
-    set({ selectedGems: {} });
-  },
-
-  showGemsToDiscard: (currentTotal: number, playerId: string) => {
+  showGemsToDiscard: (playerId: string, gemsToDiscard: number) =>
     set({
       gemsToDiscard: {
         isOpen: true,
-        currentTotal,
-        playerId
-      }
-    });
-  },
+        playerId,
+        gemsToDiscard,
+      },
+    }),
 
-  hideGemsToDiscard: () => {
-    set({ gemsToDiscard: null });
-  },
-
-  reset: () => {
-    set({
-      gameState: null,
-      error: null,
-      loading: false,
-      selectedGems: {},
-      gemsToDiscard: null,
-      confirmDialog: null
-    });
-  }
+  hideGemsToDiscard: () => set({ gemsToDiscard: null }),
 })); 

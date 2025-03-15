@@ -2,9 +2,10 @@
 
 import { useGameStore } from '../../store/gameStore';
 import { useRoomStore } from '../../store/roomStore';
-// import { useSocket } from '../../hooks/useSocket';
+import { useSocket } from '../../hooks/useSocket';
 import { GemType } from '../../types/game';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useUserStore } from '../../store/userStore';
 
 const gemColorMap: Record<GemType, string> = {
   diamond: 'bg-white border-2',
@@ -26,22 +27,45 @@ const gemNameMap: Record<GemType, string> = {
 
 export function DiscardGemsDialog() {
   const gameState = useGameStore(state => state.gameState);
-  const gemsToDiscard = useGameStore(state => state.gemsToDiscard);
-  // const hideGemsToDiscard = useGameStore(state => state.hideGemsToDiscard);
+  const setLoading = useGameStore(state => state.setLoading);
   const roomId = useRoomStore(state => state.roomId);
-  // const { performGameAction } = useSocket();
+  const { performGameAction } = useSocket();
   const [selectedGems, setSelectedGems] = useState<Partial<Record<GemType, number>>>({});
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  if (!gemsToDiscard?.isOpen || !gameState || !roomId) return null;
+  const pendingDiscard = gameState?.pendingDiscard;
+  
+  // 如果成功丢弃，添加自动关闭的效果
+  useEffect(() => {
+    if (isSuccess) {
+      // 短暂显示成功消息后关闭对话框
+      const timer = setTimeout(() => {
+        // 重置状态
+        setSelectedGems({});
+        setIsSuccess(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess]);
+  
+  // 当前登录用户ID
+  const currentUserId = useUserStore(state => state.playerId);
+  
+  // 如果没有待丢弃的宝石，或不是当前用户需要丢弃，隐藏对话框
+  if (!pendingDiscard || !gameState || !roomId || pendingDiscard.playerId !== currentUserId) return null;
 
-  const currentPlayer = gameState.players.find(p => p.id === gemsToDiscard.playerId);
+  const currentPlayer = gameState.players.find(p => p.id === pendingDiscard.playerId);
   if (!currentPlayer) return null;
 
   const currentTotal = Object.values(currentPlayer.gems).reduce((sum, count) => sum + (count || 0), 0);
   const selectedTotal = Object.values(selectedGems).reduce((sum, count) => sum + (count || 0), 0);
-  const remainingToDiscard = currentTotal - 10 - selectedTotal;
+  const remainingToDiscard = pendingDiscard.gemsCount - selectedTotal;
 
   const handleGemClick = (gemType: GemType) => {
+    if (isProcessing) return;
+
     const currentGemCount = currentPlayer.gems[gemType] || 0;
     const selectedCount = selectedGems[gemType] || 0;
 
@@ -53,78 +77,125 @@ export function DiscardGemsDialog() {
     }
   };
 
+  const handleRemoveGem = (gemType: GemType) => {
+    if (isProcessing) return;
+
+    const selectedCount = selectedGems[gemType] || 0;
+    if (selectedCount > 0) {
+      setSelectedGems(prev => ({
+        ...prev,
+        [gemType]: prev[gemType] ? prev[gemType]! - 1 : 0
+      }));
+    }
+  };
+
   const handleConfirm = async () => {
-    // if (remainingToDiscard === 0) {
-    //   try {
-    //     await performGameAction(roomId, {
-    //       type: 'DISCARD_GEMS',
-    //       playerId: gemsToDiscard.playerId,
-    //       gems: selectedGems
-    //     });
-    //     hideGemsToDiscard();
-    //   } catch (error) {
-    //     console.error('Failed to discard gems:', error);
-    //   }
-    // }
+    if (remainingToDiscard <= 0 && !isProcessing) {
+      try {
+        setIsProcessing(true);
+        setLoading(true);
+        await performGameAction(roomId, {
+          type: 'DISCARD_GEMS',
+          playerId: pendingDiscard.playerId,
+          payload: {
+            gems: selectedGems
+          }
+        });
+        // 标记成功
+        setIsSuccess(true);
+      } catch (error) {
+        console.error('Failed to discard gems:', error);
+        setIsProcessing(false);
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 max-w-lg w-full">
-        <h2 className="text-xl font-bold mb-4">需要丢弃宝石</h2>
-        <p className="mb-4">
-          你的宝石总数为 {currentTotal}，超过了上限 10 个。
-          请丢弃 {remainingToDiscard} 个宝石。
-        </p>
+        {isSuccess ? (
+          <div className="text-center py-6">
+            <svg className="h-16 w-16 text-green-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <h2 className="text-xl font-bold text-green-600 mb-2">宝石已丢弃</h2>
+            <p className="text-gray-500">游戏继续进行中...</p>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold mb-4">需要丢弃宝石</h2>
+            <p className="mb-4">
+              你的宝石总数为 {currentTotal}，超过了上限 10 个。
+              请丢弃 <span className="font-bold text-red-500">{remainingToDiscard}</span> 个宝石。
+            </p>
 
-        <div className="grid grid-cols-5 gap-4 mb-6">
-          {(Object.keys(gemColorMap) as GemType[]).map((gemType) => {
-            const count = currentPlayer.gems[gemType] || 0;
-            const selectedCount = selectedGems[gemType] || 0;
-            const remainingCount = count - selectedCount;
+            <div className="mb-6">
+              <h3 className="font-bold mb-2">当前宝石:</h3>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(gemNameMap) as GemType[]).map(gemType => {
+                  const count = currentPlayer.gems[gemType] || 0;
+                  if (count === 0) return null;
+                  
+                  return (
+                    <div key={gemType} className="flex flex-col items-center">
+                      <button
+                        onClick={() => handleGemClick(gemType)}
+                        disabled={remainingToDiscard <= 0 || isProcessing}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold relative disabled:opacity-50"
+                      >
+                        <div className={`w-8 h-8 rounded-full ${gemColorMap[gemType]}`}></div>
+                        <span className="absolute -top-1 -right-1 bg-gray-800 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                          {count}
+                        </span>
+                      </button>
+                      <span className="text-xs mt-1">{gemNameMap[gemType]}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
-            if (count === 0) return null;
+            {Object.keys(selectedGems).length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-bold mb-2">将丢弃:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {(Object.keys(selectedGems) as GemType[]).map(gemType => {
+                    const count = selectedGems[gemType] || 0;
+                    if (count === 0) return null;
+                    
+                    return (
+                      <div key={gemType} className="flex flex-col items-center">
+                        <button
+                          onClick={() => handleRemoveGem(gemType)}
+                          disabled={isProcessing}
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold relative disabled:opacity-50"
+                        >
+                          <div className={`w-8 h-8 rounded-full ${gemColorMap[gemType]}`}></div>
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                            {count}
+                          </span>
+                        </button>
+                        <span className="text-xs mt-1">{gemNameMap[gemType]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-            return (
+            <div className="flex justify-end">
               <button
-                key={gemType}
-                className={`
-                  relative p-4 rounded-lg
-                  ${gemColorMap[gemType]}
-                  ${remainingCount > 0 && remainingToDiscard > 0 ? 'cursor-pointer hover:opacity-80' : 'opacity-50 cursor-not-allowed'}
-                  transition-all duration-200
-                  flex flex-col items-center justify-center
-                  shadow-lg
-                `}
-                onClick={() => handleGemClick(gemType)}
-                disabled={remainingCount === 0 || remainingToDiscard === 0}
+                onClick={handleConfirm}
+                disabled={remainingToDiscard > 0 || isProcessing}
+                className={`px-4 py-2 ${isProcessing ? 'bg-gray-300' : 'bg-blue-500'} text-white rounded disabled:bg-gray-300`}
               >
-                <span className="text-sm font-bold mb-1">{gemNameMap[gemType]}</span>
-                <span className="text-lg">{remainingCount}</span>
-                {selectedCount > 0 && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    -{selectedCount}
-                  </div>
-                )}
+                {isProcessing ? '处理中...' : '确认'}
               </button>
-            );
-          })}
-        </div>
-
-        <div className="flex justify-end gap-4">
-          <button
-            className={`
-              px-4 py-2 rounded
-              ${remainingToDiscard === 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-300 cursor-not-allowed'}
-              text-white font-bold
-              transition-colors
-            `}
-            onClick={handleConfirm}
-            disabled={remainingToDiscard > 0}
-          >
-            确认
-          </button>
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
