@@ -38,9 +38,8 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
       relative w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 rounded-lg
       bg-gradient-to-br ${cardColors[card.gem]}
       border
-      ${disabled ? 'opacity-60 saturate-50' : isSelected ? 'z-30' : 'hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)]'}
+      ${disabled ? 'cursor-not-allowed' : isSelected ? 'z-30' : 'hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)] cursor-pointer'}
       transition-all duration-300 ease-out
-      cursor-pointer
       ${isSelected ? 'scale-[1.2] z-30 shadow-xl shadow-black/20' : 'shadow-md shadow-black/10'}
       group
     `}>
@@ -48,7 +47,7 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
       <div className="relative w-full h-full overflow-hidden rounded-lg backdrop-blur-sm">
         {/* 卡片发光效果 */}
         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        
+
         {/* 卡牌图案 */}
         <div
           className="absolute inset-0 bg-[url('/images/cards.webp')] bg-no-repeat"
