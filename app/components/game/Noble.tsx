@@ -37,10 +37,10 @@ export const Noble = ({ noble }: NobleProps) => {
                   group hover:-translate-y-1 hover:[transform:perspective(600px)_rotateY(5deg)]">
       {/* 装饰性边框 */}
       <div className="absolute inset-1 rounded-lg border border-white/30 pointer-events-none"></div>
-      
+
       {/* 发光效果 */}
       <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/30 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-      
+
       {/* 贵族头像 - 调整高度和缩放 */}
       <div className="w-full h-20 relative">
         <div
@@ -71,14 +71,14 @@ export const Noble = ({ noble }: NobleProps) => {
         </svg>
       </div>
 
-      {/* 要求 - 修改为紧凑布局 */}
+      {/* 要求 - REQ-004: 方形宝石图标，水平排列 */}
       <div className="w-full bg-white/60 backdrop-blur-sm p-1 mt-auto">
-        <div className="flex justify-center flex-wrap gap-0.5">
+        <div className="flex justify-center flex-wrap gap-1">
           {Object.entries(noble.requirements).map(([gem, count]) => (
             <div key={gem}
               className="flex items-center gap-0.5 bg-white/80 
-                      rounded px-0.5 py-0.5 shadow-sm">
-              <div className={`w-3 h-3 rounded-full ${gemColors[gem as GemType]} 
+                      rounded px-1 py-0.5 shadow-sm">
+              <div className={`w-3 h-3 rounded-sm ${gemColors[gem as GemType]} 
                           shadow-sm border transform hover:scale-110 transition-transform`} />
               <span className="text-xs font-medium">{count}</span>
             </div>

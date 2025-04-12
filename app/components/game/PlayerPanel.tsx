@@ -7,6 +7,7 @@ import { Noble } from './Noble';
 import { useGameStore } from '../../store/gameStore';
 import { useSocket } from '../../hooks/useSocket';
 import { useRoomStore } from '../../store/roomStore';
+import { useUserStore } from '../../store/userStore';
 import { GameValidator } from '../../lib/game/validator';
 
 const gemColorMap: Record<GemType, string> = {
@@ -30,7 +31,10 @@ const gemNameMap: Record<GemType, string> = {
 export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
   const gameState = useGameStore(state => state.gameState);
   const roomId = useRoomStore(state => state.roomId);
+  const currentUserId = useUserStore(state => state.playerId);
   const { performGameAction } = useSocket();
+
+  const isSelf = player.id === currentUserId;
 
   const handlePurchaseReservedCard = async (card: CardType) => {
     if (!gameState || !roomId) return;
@@ -54,11 +58,12 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
 
   return (
     <div className={`
-      p-3 rounded-lg shadow-md border 
+      p-2 md:p-3 rounded-lg shadow-md border 
       transition-all duration-300
-      ${isActive 
-        ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300 shadow-yellow-100' 
+      ${isActive
+        ? 'bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-300 shadow-yellow-100'
         : 'bg-white border-gray-100 hover:border-indigo-100 hover:shadow-md'}
+      ${isSelf ? 'order-first' : ''}
     `}>
       {/* 玩家信息头部 */}
       <div className="flex justify-between items-center mb-2">
@@ -99,7 +104,7 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
             {Object.values(player.gems).reduce((a, b) => a + b, 0)}/10
           </span>
         </div>
-        
+
         {/* 宝石资源栏 - 水平紧凑布局 */}
         <div className="flex justify-around">
           {(['diamond', 'sapphire', 'emerald', 'ruby', 'onyx', 'gold'] as GemType[]).map((gemType) => (
@@ -123,23 +128,25 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {/* 左侧：预留卡区域 */}
-        <div className="bg-blue-50 rounded-lg p-1.5">
-          <h3 className="text-xs font-medium text-blue-700 mb-1 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-            </svg>
-            预留卡: {player.reservedCards.length}/3
-          </h3>
-          <div className="relative">
-            <div className="flex flex-row overflow-x-auto py-1 min-h-[70px] items-center justify-start space-x-1">
+      {/* REQ-009: 只为当前玩家显示预留卡和贵族，并优化布局 */}
+      {isSelf && (
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          {/* 左侧：预留卡区域 - 优化 */}
+          <div className="bg-blue-50 rounded-lg p-1.5">
+            <h3 className="text-xs font-medium text-blue-700 mb-1 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+              </svg>
+              预留卡: {player.reservedCards.length}/3
+            </h3>
+            {/* 移除 overflow-x-auto，调整为 flex-wrap */}
+            <div className="flex flex-wrap justify-center items-center gap-1 min-h-[110px]">
               {player.reservedCards.length > 0 ? (
                 player.reservedCards.map((card) => (
-                  <div 
-                    key={card.id} 
-                    className="transform scale-[0.65] origin-left flex-shrink-0"
-                    style={{width: '84px', height: '120px'}}
+                  <div
+                    key={card.id}
+                    // 调整缩放和边距，确保3张卡能放下
+                    className="transform scale-[0.55] md:scale-[0.65] origin-center flex-shrink-0 -mx-3 md:-mx-2"
                   >
                     <div className="relative">
                       <Card
@@ -148,22 +155,20 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
                       />
                       {isActive && GameValidator.canPurchaseCard(gameState!, {
                         type: 'PURCHASE_CARD',
-                        payload: {
-                          cardId: card.id
-                        },
+                        payload: { cardId: card.id },
                       }) && (
-                        <button
-                          onClick={() => handlePurchaseReservedCard(card)}
-                          className="absolute -bottom-2 left-1/2 -translate-x-1/2 
+                          <button
+                            onClick={() => handlePurchaseReservedCard(card)}
+                            className="absolute -bottom-4 left-1/2 -translate-x-1/2 
                                   px-2 py-0.5 bg-blue-500 text-white text-xs rounded-md
                                   shadow-md shadow-blue-500/30
                                   hover:bg-blue-600 hover:shadow-blue-600/30
                                   active:transform active:scale-95
-                                  transition-all duration-200"
-                        >
-                          购买
-                        </button>
-                      )}
+                                  transition-all duration-200 whitespace-nowrap"
+                          >
+                            购买
+                          </button>
+                        )}
                     </div>
                   </div>
                 ))
@@ -171,37 +176,35 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
                 <span className="flex items-center justify-center w-full h-full text-xs text-blue-400 italic">无预留卡</span>
               )}
             </div>
-            {player.reservedCards.length > 0 && (
-              <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-blue-50 to-transparent pointer-events-none"></div>
-            )}
           </div>
-        </div>
 
-        {/* 右侧：贵族区域 */}
-        <div className="bg-purple-50 rounded-lg p-1.5">
-          <h3 className="text-xs font-medium text-purple-700 mb-1 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-            贵族: {player.nobles.length}
-          </h3>
-          <div className="flex flex-row flex-nowrap overflow-x-hidden h-[60px] items-center justify-center">
-            {player.nobles.length > 0 ? (
-              player.nobles.map((noble, index) => (
-                <div 
-                  key={noble.id} 
-                  className={`transform scale-[0.65] origin-center -mx-4 ${index === 0 ? 'ml-0' : ''} ${index === player.nobles.length - 1 ? 'mr-0' : ''}`}
-                  style={{zIndex: 10 - index}}
-                >
-                  <Noble noble={noble} />
-                </div>
-              ))
-            ) : (
-              <span className="text-xs text-purple-400 italic">无贵族</span>
-            )}
+          {/* 右侧：贵族区域 - 优化 */}
+          <div className="bg-purple-50 rounded-lg p-1.5">
+            <h3 className="text-xs font-medium text-purple-700 mb-1 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+              贵族: {player.nobles.length}
+            </h3>
+            {/* 移除 overflow-x-hidden，调整为 flex-wrap */}
+            <div className="flex flex-wrap justify-center items-center gap-1 min-h-[85px]">
+              {player.nobles.length > 0 ? (
+                player.nobles.map((noble) => (
+                  <div
+                    key={noble.id}
+                    // 调整缩放
+                    className={`transform scale-[0.6] md:scale-[0.65] origin-center flex-shrink-0`}
+                  >
+                    <Noble noble={noble} />
+                  </div>
+                ))
+              ) : (
+                <span className="text-xs text-purple-400 italic">无贵族</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }; 

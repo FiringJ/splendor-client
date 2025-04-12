@@ -26,17 +26,20 @@ export const NobleDisplay = ({ nobles }: NobleDisplayProps) => {
   return (
     <div className="flex flex-col">
       {nobles.length === 0 ? (
-        <div className="p-2 text-center text-purple-500 italic text-sm">
+        <div className="p-2 text-center text-purple-500 italic text-xs md:text-sm">
           <p>目前没有可用的贵族</p>
         </div>
       ) : (
         <div className="flex items-center justify-center">
-          <div className="flex flex-wrap gap-2 justify-center">
+          <div className="flex flex-wrap gap-1.5 md:gap-2 justify-center">
             {nobles.map((noble) => (
-              <div key={noble.id} className="transform hover:scale-105 transition-transform duration-300">
+              <div
+                key={noble.id}
+                className="transform scale-[0.85] md:scale-100 hover:scale-[0.9] md:hover:scale-105 transition-transform duration-300"
+              >
                 <Noble
                   noble={noble}
-                  // onClick={() => handleNobleClick(noble.id)}
+                // onClick={() => handleNobleClick(noble.id)}
                 />
               </div>
             ))}

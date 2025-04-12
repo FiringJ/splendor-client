@@ -29,6 +29,16 @@ const gemNameMap: Record<GemType, string> = {
   gold: '黄金',
 };
 
+// REQ-008: 添加播放音效的函数
+const playSound = (soundFile: string) => {
+  try {
+    const audio = new Audio(`/sounds/${soundFile}`);
+    audio.play().catch(error => console.error(`Error playing sound ${soundFile}:`, error));
+  } catch (error) {
+    console.error(`Failed to load sound ${soundFile}:`, error);
+  }
+};
+
 export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenProps) => {
   const selectedGems = useGameStore(state => state.selectedGems);
   const addSelectedGem = useGameStore(state => state.addSelectedGem);
@@ -51,21 +61,25 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
     if (differentColors >= 3 && !selectedGems[gemType]) return;
 
     // 如果已经选了2个同色宝石，不能再选其他的
-    if (Object.values(selectedGems).some(count => count === 2) && 
-        (!selectedGems[gemType] || selectedGems[gemType] === 0)) return;
+    if (Object.values(selectedGems).some(count => count === 2) &&
+      (!selectedGems[gemType] || selectedGems[gemType] === 0)) return;
 
     // 如果总选择超过3个
     if (totalSelected >= 3 && !selectedGems[gemType]) return;
 
+    // REQ-008: 播放选择音效
+    playSound('select.mp3');
     addSelectedGem(gemType);
   };
 
   const handleGemRightClick = (gemType: GemType, e: React.MouseEvent) => {
     e.preventDefault(); // 防止弹出右键菜单
-    if (disabled || loading || isSubmitting) return;
-    
+    if (disabled || loading || isSubmitting) return false; // 修改：确保返回 boolean
+
     const currentCount = selectedGems[gemType] || 0;
     if (currentCount > 0) {
+      // REQ-008: 播放取消选择音效
+      playSound('deselect.mp3');
       removeSelectedGem(gemType);
     }
     return false;
@@ -83,20 +97,19 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
   };
 
   const hasSelectedGems = Object.values(selectedGems).some(count => count > 0);
-  
-  // 将宝石分为两行显示
+
   const gemTypes = Object.keys(gemColorMap) as GemType[];
   const firstRow = gemTypes.slice(0, 3);
   const secondRow = gemTypes.slice(3);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        {/* 两行显示宝石代币 */}
-        <div className="grid grid-cols-3 gap-2 justify-items-center">
+    <div className="flex flex-col gap-2 md:gap-3">
+      <div className="flex flex-col gap-1.5 md:gap-2">
+        {/* 两行显示宝石代币 - REQ-001: 调整 gap */}
+        <div className="grid grid-cols-3 gap-1.5 md:gap-2 justify-items-center">
           {firstRow.map((gemType) => renderGem(gemType))}
         </div>
-        <div className="grid grid-cols-3 gap-2 justify-items-center">
+        <div className="grid grid-cols-3 gap-1.5 md:gap-2 justify-items-center">
           {secondRow.map((gemType) => renderGem(gemType))}
         </div>
       </div>
@@ -137,50 +150,53 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
       )}
     </div>
   );
-  
+
   function renderGem(gemType: GemType) {
     const count = gems[gemType] ?? 0;
     const selectedCount = selectedGems[gemType] ?? 0;
     const remainingCount = count - selectedCount;
     const isSelected = selectedCount > 0;
-    
+
     // 黄金宝石无法被选择
     const isGoldGem = gemType === 'gold';
     const isDisabled = remainingCount === 0 || disabled || isGoldGem || loading || isSubmitting;
-    
+
     return (
       <div key={gemType} className="flex flex-col items-center">
         <button
           className={`
-            relative w-14 h-14 rounded-full
+            relative 
+            // REQ-001: 调整宝石大小
+            w-12 h-12 md:w-14 md:h-14 rounded-full
             bg-gradient-to-br ${gemColorMap[gemType]}
             border
-            ${remainingCount > 0 && !isDisabled ? 'cursor-pointer transform hover:-translate-y-1 hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}
+            ${remainingCount > 0 && !isDisabled ? 'cursor-pointer transform hover:-translate-y-1 hover:shadow-lg' : 'cursor-not-allowed'}
+            ${isGoldGem ? 'opacity-70' : ''}
             ${isSelected ? 'ring-2 ring-yellow-400 ring-offset-1' : ''}
             transition-all duration-300 ease-in-out
             flex items-center justify-center
             shadow-md
-            before:content-[''] before:absolute before:inset-[3px] before:rounded-full before:bg-gradient-to-tl before:from-white/20 before:to-transparent before:opacity-80
+            before:content-[''] before:absolute before:inset-[2px] md:before:inset-[3px] before:rounded-full before:bg-gradient-to-tl before:from-white/20 before:to-transparent before:opacity-80
           `}
           onClick={() => !isDisabled && handleGemClick(gemType)}
           onContextMenu={(e) => !isDisabled && handleGemRightClick(gemType, e)}
           disabled={isDisabled}
           title={`${gemNameMap[gemType]} ${isGoldGem ? '(无法直接获取)' : `(剩余: ${remainingCount}, 已选: ${selectedCount})`}${isSelected ? '，右键点击减少' : ''}`}
         >
-          <span className="text-lg font-bold relative z-10 text-white drop-shadow-md">
+          <span className="text-base md:text-lg font-bold relative z-10 text-white drop-shadow-md">
             {remainingCount}
           </span>
           {isSelected && (
-            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-yellow-400 rounded-full 
-                          flex items-center justify-center text-xs font-bold 
+            <div className="absolute -top-1 -right-1 md:-top-1.5 md:-right-1.5 w-4 h-4 md:w-5 md:h-5 bg-yellow-400 rounded-full 
+                          flex items-center justify-center text-[9px] md:text-xs font-bold 
                           shadow-md border border-yellow-300 animate-pulse">
               {selectedCount}
             </div>
           )}
         </button>
-        <p className="mt-1 text-xs font-medium text-gray-600 truncate w-14 text-center">
+        <p className="mt-0.5 md:mt-1 text-[10px] md:text-xs font-medium text-gray-600 truncate w-12 md:w-14 text-center">
           {gemNameMap[gemType]}
-          {isGoldGem && <span className="block text-[10px] text-yellow-600">预留时获得</span>}
+          {isGoldGem && <span className="block text-[9px] md:text-[10px] text-yellow-600">预留时获得</span>}
         </p>
       </div>
     );
