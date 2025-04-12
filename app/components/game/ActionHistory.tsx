@@ -5,14 +5,23 @@ import type { ActionHistoryProps } from '../../types/components';
 import type { GameAction, GemType, Card, Noble, GameState as GameStateType } from '../../types/game';
 import { useGameStore } from '../../store/gameStore';
 
-// 不再使用颜色映射，改为使用图标更直观
-const gemIconMap: Record<GemType, string> = {
-  diamond: '💎',
-  sapphire: '🔷',
-  emerald: '🟢',
-  ruby: '🔴',
-  onyx: '⚫',
-  gold: '🟡',
+// 使用颜色映射，与 PlayerPanel 保持一致
+const gemColorMap: Record<GemType, string> = {
+  diamond: 'bg-gradient-to-br from-white to-gray-200 border-gray-300',
+  sapphire: 'bg-gradient-to-br from-blue-400 to-blue-600 border-blue-300',
+  emerald: 'bg-gradient-to-br from-green-400 to-green-600 border-green-300',
+  ruby: 'bg-gradient-to-br from-red-400 to-red-600 border-red-300',
+  onyx: 'bg-gradient-to-br from-gray-700 to-gray-900 border-gray-600',
+  gold: 'bg-gradient-to-br from-gray-100 to-gray-300 border-gray-200', // 使用更新后的金色
+};
+
+const gemTextColorMap: Record<GemType, string> = {
+  diamond: 'text-gray-700',
+  sapphire: 'text-white',
+  emerald: 'text-white',
+  ruby: 'text-white',
+  onyx: 'text-white',
+  gold: 'text-gray-800',
 };
 
 const getActionIcon = (action: GameAction) => {
@@ -35,7 +44,7 @@ const getActionIcon = (action: GameAction) => {
 // 查找卡牌
 const findCard = (gameState: GameStateType | null, cardId: number): Card | undefined => {
   if (!gameState) return undefined;
-  
+
   // 需要同时在所有可能的地方查找卡牌
   const allCards = [
     ...gameState.cards.level1,
@@ -52,7 +61,7 @@ const findCard = (gameState: GameStateType | null, cardId: number): Card | undef
 // 查找贵族
 const findNoble = (gameState: GameStateType | null, nobleId: number): Noble | undefined => {
   if (!gameState) return undefined;
-  
+
   // 查找贵族，包括已被获得的和仍在展示区的
   const allNobles = [
     ...gameState.nobles,
@@ -62,70 +71,91 @@ const findNoble = (gameState: GameStateType | null, nobleId: number): Noble | un
 };
 
 // 获取卡牌描述
-const getCardDescription = (card: Card | undefined): string => {
+const getCardDescription = (card: Card | undefined): React.ReactNode => {
   if (!card) return '卡牌';
-  
+
   const levelMap: Record<number, string> = { 1: '初级', 2: '中级', 3: '高级' };
-  const gemIcon = gemIconMap[card.gem];
+  // 使用宝石方块图标代替 Emoji
+  const gemIcon = (
+    <span className={`inline-block w-2.5 h-2.5 rounded-sm ${gemColorMap[card.gem]} border mr-0.5 align-middle`}></span>
+  );
   const pointsText = card.points > 0 ? `${card.points}分` : '';
-  
-  return `${levelMap[card.level]}${gemIcon}${pointsText}卡牌`;
+
+  return (
+    <>
+      {levelMap[card.level]}
+      {gemIcon}
+      {pointsText}卡牌
+    </>
+  );
 };
 
 const formatAction = (action: GameAction, gameState: GameStateType | null) => {
   switch (action.type) {
     case 'TAKE_GEMS':
-      const gems = Object.entries(action.payload.gems)
+      const gemsTaken = Object.entries(action.payload.gems)
         .filter(([, count]) => count > 0)
         .map(([gem, count]) => {
           const gemType = gem as GemType;
-          return `${count}${gemIconMap[gemType]}`;
+          return (
+            <span key={gemType} className="inline-flex items-center mx-0.5">
+              <span className={`w-3 h-3 rounded-full ${gemColorMap[gemType]} border ${gemTextColorMap[gemType]} flex items-center justify-center text-[8px] font-bold mr-0.5`}>
+                {count}
+              </span>
+            </span>
+          );
         });
-      return `获取宝石：${gems.join(' ')}`;
-      
+      return <span>获取宝石：{gemsTaken}</span>;
+
     case 'PURCHASE_CARD': {
       const card = findCard(gameState, action.payload.cardId);
-      return `购买${getCardDescription(card)}`;
+      return <span>购买{getCardDescription(card)}</span>;
     }
-      
+
     case 'RESERVE_CARD':
       if (action.payload.cardId === -1) {
-        return `从牌堆预留${action.payload.level}级卡牌`;
+        return <span>从牌堆预留{action.payload.level}级卡牌</span>;
       } else {
         const card = findCard(gameState, action.payload.cardId);
-        return `预留${getCardDescription(card)}`;
+        return <span>预留{getCardDescription(card)}</span>;
       }
-      
+
     case 'CLAIM_NOBLE': {
       const noble = findNoble(gameState, action.payload.nobleId);
       if (noble) {
-        return `获得贵族「${noble.name}」(${noble.points}分)`;
+        return <span>获得贵族「{noble.name}」({noble.points}分)</span>;
       }
-      return '获得一位贵族';
+      return <span>获得一位贵族</span>;
     }
-      
+
     case 'RESTART_GAME':
-      return '重新开始游戏';
-    
+      return <span>重新开始游戏</span>;
+
     case 'DISCARD_GEMS': {
-      const gems = Object.entries(action.payload.gems)
+      const gemsDiscarded = Object.entries(action.payload.gems)
         .filter(([, count]) => count > 0)
         .map(([gem, count]) => {
           const gemType = gem as GemType;
-          return `${count}${gemIconMap[gemType]}`;
+          return (
+            <span key={gemType} className="inline-flex items-center mx-0.5">
+              <span className={`w-3 h-3 rounded-full ${gemColorMap[gemType]} border ${gemTextColorMap[gemType]} flex items-center justify-center text-[8px] font-bold mr-0.5`}>
+                {count}
+              </span>
+            </span>
+          );
         });
-      return `丢弃宝石：${gems.join(' ')}`;
+      return <span>丢弃宝石：{gemsDiscarded}</span>;
     }
-      
+
     default:
-      return '未知操作';
+      return <span>未知操作</span>;
   }
 };
 
 export const ActionHistory = ({ actions }: ActionHistoryProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const gameState = useGameStore(state => state.gameState);
-  
+
   // 自动滚动到底部，当actions变化或actions长度变化时触发
   useEffect(() => {
     if (scrollRef.current) {
@@ -136,14 +166,14 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
   // 获取玩家名字的辅助函数
   const getPlayerName = (playerId?: string) => {
     if (!gameState || !playerId) return '';
-    
+
     // 正确获取player对象，players是一个Map
     const player = Array.from(gameState.players.values()).find(p => p.id === playerId);
     return player ? player.name : '';
   };
 
   return (
-    <div 
+    <div
       ref={scrollRef}
       className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-1.5 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
     >
@@ -154,7 +184,7 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
         </svg>
         操作记录
       </h3>
-      
+
       {actions.length === 0 ? (
         <div className="text-gray-500 text-center p-2 italic text-xs">
           <p>暂无操作记录</p>
@@ -165,7 +195,7 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
             // 正确获取playerId
             const playerId = 'playerId' in action ? action.playerId : undefined;
             const playerName = getPlayerName(playerId);
-            
+
             return (
               <div
                 key={index}
