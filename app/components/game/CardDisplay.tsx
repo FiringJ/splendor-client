@@ -6,10 +6,12 @@ import { Card } from './Card';
 import { useGameStore } from '../../store/gameStore';
 import { GameValidator } from '../../lib/game/validator';
 import type { Card as CardType } from '../../types/game';
+import { useSound } from '../../hooks/useSound';
 
 const DeckCard = ({ level, count, onClick }: { level: number; count: number; onClick?: () => void }) => {
   const [showReserveButton, setShowReserveButton] = useState(false);
   const gameState = useGameStore(state => state.gameState);
+  const playSound = useSound();
 
   // 检查是否可以预留卡牌
   const canReserveFromDeck = useMemo(() => {
@@ -30,6 +32,13 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
     });
   }, [gameState, count, level]);
 
+  const handleClick = () => {
+    if (onClick) {
+      playSound('reserve_card');
+      onClick();
+    }
+  };
+
   return (
     <div
       className={`
@@ -42,6 +51,7 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
       `}
       onMouseEnter={() => count > 0 && setShowReserveButton(true)}
       onMouseLeave={() => setShowReserveButton(false)}
+      onClick={handleClick}
     >
       {/* 卡牌背面图案 */}
       <div
@@ -87,8 +97,8 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
 
 export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisplayProps) => {
   const gameState = useGameStore(state => state.gameState);
-  // 不再需要选中卡片的状态，改为悬停时显示按钮
   const [hoveredCardId, setHoveredCardId] = useState<number | null>(null);
+  const playSound = useSound();
 
   // 确保所有卡牌数组都存在
   const safeCards = {
@@ -122,6 +132,7 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
     };
 
     if (GameValidator.canPurchaseCard(gameState, action)) {
+      playSound('purchase_card');
       onPurchase(action);
       setHoveredCardId(null);
     }
@@ -139,6 +150,7 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
     };
 
     if (GameValidator.canReserveCard(gameState, action)) {
+      playSound('reserve_card');
       onReserve(action);
       setHoveredCardId(null);
     }

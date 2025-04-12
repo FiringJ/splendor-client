@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { useRoomStore } from '../../store/roomStore';
 import { useUserStore } from '../../store/userStore';
 import { useSocket } from '../../hooks/useSocket';
 import type { Player, GameAction, GemType } from '../../types/game';
+import { useSound } from '../../hooks/useSound';
 import { NobleDisplay } from './NobleDisplay';
 import { CardDisplay } from './CardDisplay';
 import { GemToken } from './GemToken';
@@ -29,9 +31,51 @@ export const GameBoard = () => {
   const roomId = useRoomStore(state => state.roomId);
   const playerId = useUserStore(state => state.playerId);
   const { performGameAction } = useSocket();
+  const playSound = useSound();
 
-  // 移除移动设备导航状态
-  // const [mobileTab, setMobileTab] = useState<'cards' | 'gems' | 'players'>('cards');
+  const prevTurnRef = useRef<string | null>(null);
+  const prevWinnerRef = useRef<Player | null>(null);
+  const prevErrorRef = useRef<string | null>(null);
+  const prevActionCountRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (gameState && gameState.currentTurn === playerId && prevTurnRef.current !== playerId) {
+      playSound('your_turn');
+    }
+    if (gameState) {
+      prevTurnRef.current = gameState.currentTurn;
+    }
+  }, [gameState?.currentTurn, playerId, playSound]);
+
+  useEffect(() => {
+    if (gameState && !prevTurnRef.current) {
+      playSound('game_start');
+    }
+    if (gameState?.winner && !prevWinnerRef.current) {
+      playSound('game_over');
+    }
+    prevWinnerRef.current = gameState?.winner ?? null;
+  }, [gameState, playSound]);
+
+  useEffect(() => {
+    if (error && error !== prevErrorRef.current) {
+      playSound('error');
+    }
+    prevErrorRef.current = error;
+  }, [error, playSound]);
+
+  useEffect(() => {
+    if (!gameState || !gameState.actions) return;
+
+    const currentActionCount = gameState.actions.length;
+    if (currentActionCount > prevActionCountRef.current) {
+      const newActions = gameState.actions.slice(prevActionCountRef.current);
+      if (newActions.some(action => action.type === 'CLAIM_NOBLE')) {
+        playSound('claim_noble');
+      }
+    }
+    prevActionCountRef.current = currentActionCount;
+  }, [gameState?.actions, playSound]);
 
   if (!gameState) return null;
 

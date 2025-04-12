@@ -128,10 +128,11 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
         </div>
       </div>
 
-      {/* REQ-009: 只为当前玩家显示预留卡和贵族，并优化布局 */}
-      {isSelf && (
+      {/* REQ-009 & REQ-013: 只为当前玩家显示预留卡和贵族，并优化布局 */}
+      {isSelf ? (
+        // REQ-013: 使用两行横向布局
         <div className="grid grid-cols-2 gap-2 mt-2">
-          {/* 左侧：预留卡区域 - 优化 */}
+          {/* 左侧：预留卡区域 - 两行横向 */}
           <div className="bg-blue-50 rounded-lg p-1.5">
             <h3 className="text-xs font-medium text-blue-700 mb-1 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -139,14 +140,13 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
               </svg>
               预留卡: {player.reservedCards.length}/3
             </h3>
-            {/* 移除 overflow-x-auto，调整为 flex-wrap */}
-            <div className="flex flex-wrap justify-center items-center gap-1 min-h-[110px]">
+            {/* 使用 grid 实现两行，每行最多2个 */}
+            <div className="grid grid-rows-2 grid-flow-col gap-x-1 gap-y-0 justify-center items-center min-h-[110px]">
               {player.reservedCards.length > 0 ? (
                 player.reservedCards.map((card) => (
                   <div
                     key={card.id}
-                    // 调整缩放和边距，确保3张卡能放下
-                    className="transform scale-[0.55] md:scale-[0.65] origin-center flex-shrink-0 -mx-3 md:-mx-2"
+                    className="transform scale-[0.55] md:scale-[0.6] origin-center flex-shrink-0 -my-3 md:-my-2" // 调整 scale 和 margin
                   >
                     <div className="relative">
                       <Card
@@ -173,12 +173,12 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
                   </div>
                 ))
               ) : (
-                <span className="flex items-center justify-center w-full h-full text-xs text-blue-400 italic">无预留卡</span>
+                <span className="row-span-2 flex items-center justify-center w-full h-full text-xs text-blue-400 italic">无预留卡</span>
               )}
             </div>
           </div>
 
-          {/* 右侧：贵族区域 - 优化 */}
+          {/* 右侧：贵族区域 - 两行横向 */}
           <div className="bg-purple-50 rounded-lg p-1.5">
             <h3 className="text-xs font-medium text-purple-700 mb-1 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -186,22 +186,37 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
               </svg>
               贵族: {player.nobles.length}
             </h3>
-            {/* 移除 overflow-x-hidden，调整为 flex-wrap */}
-            <div className="flex flex-wrap justify-center items-center gap-1 min-h-[85px]">
+            {/* 使用 grid 实现两行，每行最多... 根据需要调整 */}
+            <div className="grid grid-rows-2 grid-flow-col gap-x-0 gap-y-0 justify-center items-center min-h-[85px]">
               {player.nobles.length > 0 ? (
                 player.nobles.map((noble) => (
                   <div
                     key={noble.id}
-                    // 调整缩放
-                    className={`transform scale-[0.6] md:scale-[0.65] origin-center flex-shrink-0`}
+                    className={`transform scale-[0.55] md:scale-[0.6] origin-center flex-shrink-0 -my-3 md:-my-2`} // 调整 scale 和 margin
                   >
                     <Noble noble={noble} />
                   </div>
                 ))
               ) : (
-                <span className="text-xs text-purple-400 italic">无贵族</span>
+                <span className="row-span-2 flex items-center justify-center w-full h-full text-xs text-purple-400 italic">无贵族</span>
               )}
             </div>
+          </div>
+        </div>
+      ) : (
+        // REQ-014: 其他玩家：显示数量
+        <div className="flex justify-between items-center mt-2 px-1 text-xs text-gray-600">
+          <div className="flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+            </svg>
+            <span>预留: {player.reservedCards.length}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-purple-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+            <span>贵族: {player.nobles.length}</span>
           </div>
         </div>
       )}

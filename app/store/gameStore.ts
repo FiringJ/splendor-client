@@ -42,16 +42,24 @@ interface GameStore {
   // 丢弃宝石相关
   showGemsToDiscard: (playerId: string, gemsToDiscard: number) => void;
   hideGemsToDiscard: () => void;
+
+  // REQ-011: 添加重置游戏状态的 action
+  resetGameState: () => void;
 }
 
-// 游戏状态存储
-export const useGameStore = create<GameStore>((set) => ({
+// 初始状态
+const initialState = {
   gameState: null,
   error: null,
   loading: false,
   selectedGems: {},
   confirmDialog: null,
   gemsToDiscard: null,
+};
+
+// 游戏状态存储
+export const useGameStore = create<GameStore>((set) => ({
+  ...initialState,
 
   setLoading: (loading: boolean) => set({ loading }),
 
@@ -102,4 +110,7 @@ export const useGameStore = create<GameStore>((set) => ({
     }),
 
   hideGemsToDiscard: () => set({ gemsToDiscard: null }),
+
+  // REQ-011: 实现重置游戏状态
+  resetGameState: () => set({ ...initialState }),
 })); 

@@ -3,6 +3,7 @@
 import { GemType } from '../../types/game';
 import { useGameStore } from '../../store/gameStore';
 import { useState } from 'react';
+import { useSound } from '../../hooks/useSound';
 
 interface GemTokenProps {
   gems?: Partial<Record<GemType, number>>;
@@ -29,22 +30,13 @@ const gemNameMap: Record<GemType, string> = {
   gold: '黄金',
 };
 
-// REQ-008: 添加播放音效的函数
-const playSound = (soundFile: string) => {
-  try {
-    const audio = new Audio(`/sounds/${soundFile}`);
-    audio.play().catch(error => console.error(`Error playing sound ${soundFile}:`, error));
-  } catch (error) {
-    console.error(`Failed to load sound ${soundFile}:`, error);
-  }
-};
-
 export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenProps) => {
   const selectedGems = useGameStore(state => state.selectedGems);
   const addSelectedGem = useGameStore(state => state.addSelectedGem);
   const removeSelectedGem = useGameStore(state => state.removeSelectedGem);
   const loading = useGameStore(state => state.loading);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const playSound = useSound();
 
   const handleGemClick = (gemType: GemType) => {
     if (disabled || loading || isSubmitting) return;
@@ -67,8 +59,8 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
     // 如果总选择超过3个
     if (totalSelected >= 3 && !selectedGems[gemType]) return;
 
-    // REQ-008: 播放选择音效
-    playSound('select.mp3');
+    // REQ-012: 播放选择音效
+    playSound('select_gem');
     addSelectedGem(gemType);
   };
 
@@ -78,8 +70,8 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
 
     const currentCount = selectedGems[gemType] || 0;
     if (currentCount > 0) {
-      // REQ-008: 播放取消选择音效
-      playSound('deselect.mp3');
+      // REQ-012: 播放取消选择音效
+      playSound('deselect_gem');
       removeSelectedGem(gemType);
     }
     return false;
