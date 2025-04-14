@@ -8,4 +8,4 @@ services:
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://localhost:3001
-    restart: unless-stopped 
+    restart: unless-stopped
