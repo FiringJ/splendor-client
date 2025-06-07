@@ -13,7 +13,6 @@ export const BackgroundMusic = () => {
     // 创建音频元素
     const audio = new Audio('/audio/background-music.mp3');
     audio.loop = true;
-    audio.volume = volume;
     audioRef.current = audio;
 
     // 监听加载事件

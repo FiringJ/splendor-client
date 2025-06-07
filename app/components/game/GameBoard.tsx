@@ -45,7 +45,7 @@ export const GameBoard = () => {
     if (gameState) {
       prevTurnRef.current = gameState.currentTurn;
     }
-  }, [gameState?.currentTurn, playerId, playSound]);
+  }, [gameState, playerId, playSound]);
 
   useEffect(() => {
     if (gameState && !prevTurnRef.current) {
@@ -75,7 +75,7 @@ export const GameBoard = () => {
       }
     }
     prevActionCountRef.current = currentActionCount;
-  }, [gameState?.actions, playSound]);
+  }, [gameState, playSound]);
 
   if (!gameState) return null;
 

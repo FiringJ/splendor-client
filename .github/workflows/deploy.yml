@@ -1,4 +1,4 @@
-name: Deploy Client
+name: Build and Deploy Client
 
 on:
   push:
@@ -6,21 +6,73 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Next.js application
+        run: npm run build
+        env:
+          NODE_OPTIONS: "--max-old-space-size=8192"
+      
+      - name: Package build files
+        run: tar -czvf build.tar.gz .next public package.json package-lock.json next.config.ts
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: splendor-client:latest
+          outputs: type=docker,dest=image.tar
+          # 使用自定义Dockerfile.ci，不包含构建步骤
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-artifacts
+          path: |
+            build.tar.gz
+            image.tar
+  
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: deployment-artifacts
+      
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
+      
       - name: Add SSH known hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
+      
+      - name: Copy files to server
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          scp build.tar.gz image.tar $SERVER_USER@$SERVER_IP:/root/splendor-client/
+      
       - name: Deploy to server
         env:
           SERVER_IP: ${{ secrets.SERVER_IP }}
@@ -29,16 +81,22 @@ jobs:
           ssh $SERVER_USER@$SERVER_IP << 'ENDSSH'
             cd /root/splendor-client
             
-            # 保存日志并拉取代码
+            # 保存日志
             mkdir -p logs
             docker-compose logs > logs/backup-$(date +%Y%m%d-%H%M%S).log || true
-            git pull
-
-            # 重新构建和启动服务
+            
+            # 停止现有服务
             docker-compose down
-            docker builder prune -f
-            docker-compose up -d --build
-
+            
+            # 加载构建好的镜像
+            docker load < image.tar
+            
+            # 提取构建文件
+            tar -xzvf build.tar.gz
+            
+            # 重启服务，使用预构建的镜像
+            docker-compose up -d
+            
             # 等待服务启动并检查
             echo "Waiting for client service to start..."
             sleep 10
@@ -50,4 +108,7 @@ jobs:
             fi
             
             echo "Client deployment completed successfully!"
+            
+            # 清理临时文件
+            rm build.tar.gz image.tar
           ENDSSH 

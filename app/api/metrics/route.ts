@@ -1,27 +1,19 @@
 import { NextResponse } from 'next/server';
 
 // 前端简单的指标端点，避免404错误
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const metrics = {
+    const { searchParams } = new URL(request.url);
+    const metric = searchParams.get('metric');
+    
+    // TODO: 从监控系统获取实际指标
+    const mockData: Record<string, unknown> = {
       timestamp: new Date().toISOString(),
-      service: 'splendor-client',
-      version: '1.0.0',
-      status: 'ok',
-      // 简单的前端指标
-      performance: {
-        memory: typeof window !== 'undefined' ? (performance as any).memory : undefined,
-        navigation: typeof window !== 'undefined' ? performance.navigation : undefined,
-      },
-      userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'server-side'
+      metric: metric,
+      value: Math.random() * 100
     };
-
-    return NextResponse.json(metrics, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      },
-    });
+    
+    return NextResponse.json(mockData);
   } catch (error) {
     console.error('获取前端指标失败:', error);
     return NextResponse.json(

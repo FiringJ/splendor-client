@@ -134,6 +134,7 @@ export const useSocket = () => {
       //   socket.off('error');
       // }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 创建房间
