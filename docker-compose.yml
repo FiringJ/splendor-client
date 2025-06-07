@@ -1,8 +1,7 @@
 services:
   client:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: splendor-client-image:latest
+    container_name: splendor-client-client-1
     ports:
       - "3000:3000"
     environment:

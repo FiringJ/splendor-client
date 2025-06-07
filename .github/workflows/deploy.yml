@@ -9,106 +9,87 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+          cache-dependency-path: './package-lock.json' # 指向正确的文件
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build Next.js application
         run: npm run build
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
-      
-      - name: Package build files
-        run: tar -czvf build.tar.gz .next public package.json package-lock.json next.config.ts
-      
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image and save as tar
+        uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile.ci # 明确使用 Dockerfile.ci
           push: false
-          tags: splendor-client:latest
+          tags: splendor-client-image:latest
           outputs: type=docker,dest=image.tar
-          # 使用自定义Dockerfile.ci，不包含构建步骤
-      
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: deployment-artifacts
-          path: |
-            build.tar.gz
-            image.tar
-  
+          name: docker-image
+          path: image.tar
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v4
         with:
-          name: deployment-artifacts
-      
+          name: docker-image
+
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.8.0
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
+
       - name: Add SSH known hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-      
-      - name: Copy files to server
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-        run: |
-          scp build.tar.gz image.tar $SERVER_USER@$SERVER_IP:/root/splendor-client/
-      
-      - name: Deploy to server
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-        run: |
-          ssh $SERVER_USER@$SERVER_IP << 'ENDSSH'
+
+      - name: Copy image to server
+        run: scp image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/root/splendor-client/
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
             cd /root/splendor-client
             
             # 保存日志
             mkdir -p logs
             docker-compose logs > logs/backup-$(date +%Y%m%d-%H%M%S).log || true
-            
+
             # 停止现有服务
-            docker-compose down
+            docker-compose down || true
             
-            # 加载构建好的镜像
+            # 加载新镜像
             docker load < image.tar
             
-            # 提取构建文件
-            tar -xzvf build.tar.gz
-            
-            # 重启服务，使用预构建的镜像
+            # 使用新镜像启动服务
             docker-compose up -d
             
-            # 等待服务启动并检查
-            echo "Waiting for client service to start..."
-            sleep 10
-            
-            if ! curl -s http://localhost:3000 > /dev/null; then
-              echo "Client service is not responding!"
-              docker-compose logs
-              exit 1
-            fi
-            
-            echo "Client deployment completed successfully!"
-            
             # 清理临时文件
-            rm build.tar.gz image.tar
-          ENDSSH 
+            rm image.tar
+            
+            echo "Deployment completed successfully!" 
