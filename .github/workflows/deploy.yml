@@ -68,8 +68,13 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
+      - name: Sync docker-compose.yml to server
+        run: |
+          scp docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/root/splendor-client/docker-compose.yml
+
       - name: Copy image to server
-        run: scp image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/root/splendor-client/
+        run: |
+          rsync -avz --progress -e "ssh -o StrictHostKeyChecking=no" image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/root/splendor-client/
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
@@ -86,6 +91,9 @@ jobs:
 
             # 停止现有服务
             docker-compose down || true
+
+            # 强制清理 3000 端口占用容器（防止端口残留问题）
+            docker ps -q --filter "publish=3000" | xargs -r docker rm -f || true
             
             # 加载新镜像
             docker load < image.tar

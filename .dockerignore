@@ -1,0 +1,17 @@
+# 不需要的目录
+node_modules
+.git
+.gitignore
+logs
+tests
+coverage
+docs
+
+# 不需要的文件
+*.log
+*.md
+Dockerfile
+Dockerfile.ci
+.env.local
+.vscode
+.idea
