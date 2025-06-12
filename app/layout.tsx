@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { SentryUserTracker } from "./components/SentryUserTracker";
+import PlausibleProvider from "next-plausible";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <SentryUserTracker />
-          {children}
+          <PlausibleProvider domain="splendor.uno">
+            {children}
+          </PlausibleProvider>
         </ThemeProvider>
       </body>
     </html>

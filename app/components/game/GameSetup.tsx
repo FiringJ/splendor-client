@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePlausible } from "next-plausible";
 import { useSocket } from '../../hooks/useSocket';
 import { useGameStore } from '../../store/gameStore';
 import { useRoomStore } from '../../store/roomStore';
@@ -25,6 +26,7 @@ export function GameSetup() {
   const [roomIdToJoin, setRoomIdToJoin] = useState('');
   const [copiedRoomId, setCopiedRoomId] = useState(false);
   const { socket } = useSocketStore();
+  const plausible = usePlausible();
 
   // 本地游戏开始时保存玩家名称
   const savePlayerName = () => {
@@ -42,6 +44,8 @@ export function GameSetup() {
       
       // 保存玩家名称
       savePlayerName();
+
+      plausible('local_game_started', { props: { playerCount, playerName } });
       
       // 先创建房间
       const roomId = await createRoom(playerId, playerName || '玩家1');
@@ -117,6 +121,9 @@ export function GameSetup() {
     try {
       setLoading(true);
       setError(null);
+      // 上传所有玩家名称
+      const playerNames = roomState?.players?.map(player => player.name) || [];
+      plausible('online_game_started', { props: { roomId, playerNames: playerNames.join(', ') } });
       const response = await startGame(roomId, false);
       if (response.success && response.gameState) {
         setGameState(response.gameState);
