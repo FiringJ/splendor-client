@@ -49,17 +49,25 @@ jobs:
           name: docker-image
           path: image.tar
 
+      - name: Upload docker-compose.yml artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-compose
+          path: docker-compose.yml
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Download Docker image artifact
         uses: actions/download-artifact@v4
         with:
           name: docker-image
+
+      - name: Download docker-compose.yml artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-compose
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
