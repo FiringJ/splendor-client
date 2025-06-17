@@ -32,7 +32,7 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
     });
   }, [gameState, count, level]);
 
-  const handleClick = () => {
+  const handleButtonClick = () => {
     if (onClick) {
       playSound('reserve_card');
       onClick();
@@ -51,7 +51,6 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
       `}
       onMouseEnter={() => count > 0 && setShowReserveButton(true)}
       onMouseLeave={() => setShowReserveButton(false)}
-      onClick={handleClick}
     >
       {/* 卡牌背面图案 */}
       <div
@@ -78,7 +77,7 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
       {showReserveButton && canReserveFromDeck && onClick && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
           <button
-            onClick={onClick}
+            onClick={handleButtonClick}
             className="px-3 py-1.5 bg-yellow-500 text-white rounded-md text-xs
                      hover:bg-yellow-600 active:bg-yellow-700
                      shadow-md shadow-yellow-500/30
