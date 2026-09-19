@@ -81,9 +81,39 @@ jobs:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Add SSH known hosts
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          if [ -z "${SERVER_IP}" ]; then
+            echo "SERVER_IP secret is empty"
+            exit 1
+          fi
+          echo "SERVER_IP length: ${#SERVER_IP}"
+          if printf '%s' "$SERVER_IP" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+            echo "SERVER_IP form: ipv4"
+          elif printf '%s' "$SERVER_IP" | grep -Eq '^[A-Za-z0-9.-]+$'; then
+            echo "SERVER_IP form: hostname"
+          else
+            echo "SERVER_IP form: other"
+          fi
+          if getent hosts "$SERVER_IP" >/dev/null 2>&1; then
+            echo "name resolution: ok"
+          else
+            echo "name resolution: failed"
+          fi
+          set +e
+          ssh-keyscan -T 10 -H "$SERVER_IP" > /tmp/known_hosts_scan 2>/tmp/keyscan.err
+          code=$?
+          set -e
+          python3 -c 'import os, pathlib; ip=os.environ["SERVER_IP"]; print(pathlib.Path("/tmp/keyscan.err").read_text(errors="replace").replace(ip, "<server>"), end="")'
+          echo "ssh-keyscan exit: ${code}"
+          echo "host keys found: $(grep -c . /tmp/known_hosts_scan || true)"
+          if [ "$code" -ne 0 ] || [ ! -s /tmp/known_hosts_scan ]; then
+            echo "Could not read the VPS host key. Check SERVER_IP, DNS, and that port 22 accepts GitHub Actions."
+            exit 1
+          fi
+          cat /tmp/known_hosts_scan >> ~/.ssh/known_hosts
 
       - name: Sync docker-compose.yml to server
         run: |
