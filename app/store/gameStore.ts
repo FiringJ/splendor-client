@@ -1,7 +1,8 @@
 'use client';
 
 import { create } from 'zustand';
-import { GameState, GemType } from '../types/game';
+import { DecisionMeta, GameState, GemType } from '../types/game';
+import { applyDecisionUpdate, emptyDecisionLog } from '../lib/game/decisionMeta';
 
 interface ConfirmDialogState {
   isOpen: boolean;
@@ -24,6 +25,11 @@ interface GameStore {
   selectedGems: Partial<Record<GemType, number>>;
   confirmDialog: ConfirmDialogState | null;
   gemsToDiscard: GemsToDiscardState | null;
+  /** 按动作下标保存的 AI 决策。没有元数据时为空。 */
+  decisionsByActionIndex: Record<number, DecisionMeta>;
+  /** 最近一次 AI 决策。人类回合不会清掉，方便对照刚下完的棋。 */
+  latestDecision: DecisionMeta | null;
+  trackedActionCount: number;
 
   // 更新游戏状态
   setGameState: (gameState: GameState) => void;
@@ -43,6 +49,10 @@ interface GameStore {
   showGemsToDiscard: (playerId: string, gemsToDiscard: number) => void;
   hideGemsToDiscard: () => void;
 
+  // 合并一次 gameStateUpdate 上的可选 decisionMeta。raw 无法识别时不抛错。
+  ingestDecisionUpdate: (actionCount: number, rawMeta: unknown, restarted?: boolean) => void;
+  clearDecisions: () => void;
+
   // REQ-011: 添加重置游戏状态的 action
   resetGameState: () => void;
 }
@@ -55,6 +65,7 @@ const initialState = {
   selectedGems: {},
   confirmDialog: null,
   gemsToDiscard: null,
+  ...emptyDecisionLog(),
 };
 
 // 游戏状态存储
@@ -63,7 +74,13 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setLoading: (loading: boolean) => set({ loading }),
 
-  setGameState: (gameState: GameState) => set({ gameState }),
+  setGameState: (gameState: GameState) => set((state) => {
+    const actionCount = gameState.actions?.length ?? 0;
+    if (actionCount < state.trackedActionCount) {
+      return { gameState, ...emptyDecisionLog(), trackedActionCount: actionCount };
+    }
+    return { gameState };
+  }),
 
   setError: (error: string | null) => set({ error }),
 
@@ -110,6 +127,13 @@ export const useGameStore = create<GameStore>((set) => ({
     }),
 
   hideGemsToDiscard: () => set({ gemsToDiscard: null }),
+
+  ingestDecisionUpdate: (actionCount, rawMeta, restarted = false) => set((state) => {
+    const next = applyDecisionUpdate(state, actionCount, rawMeta, restarted);
+    return next;
+  }),
+
+  clearDecisions: () => set({ ...emptyDecisionLog() }),
 
   // REQ-011: 实现重置游戏状态
   resetGameState: () => set({ ...initialState }),
