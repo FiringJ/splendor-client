@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { ActionHistoryProps } from '../../types/components';
 import type { GameAction, GemType, Card, Noble, GameState as GameStateType } from '../../types/game';
 import { useGameStore } from '../../store/gameStore';
+import { DecisionPanel, decisionBadgeClass } from './DecisionPanel';
 
 // 使用颜色映射，与 PlayerPanel 保持一致
 const gemColorMap: Record<GemType, string> = {
@@ -155,6 +156,8 @@ const formatAction = (action: GameAction, gameState: GameStateType | null) => {
 export const ActionHistory = ({ actions }: ActionHistoryProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const gameState = useGameStore(state => state.gameState);
+  const latestDecision = useGameStore(state => state.latestDecision);
+  const decisionsByActionIndex = useGameStore(state => state.decisionsByActionIndex);
 
   // 自动滚动到底部，当actions变化或actions长度变化时触发
   useEffect(() => {
@@ -173,10 +176,12 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
   };
 
   return (
-    <div
-      ref={scrollRef}
-      className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-1.5 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-    >
+    <div data-testid="action-history">
+      {latestDecision && <DecisionPanel meta={latestDecision} />}
+      <div
+        ref={scrollRef}
+        className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-1.5 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+      >
       <h3 className="text-xs font-medium text-gray-700 mb-1 px-1 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -195,6 +200,7 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
             // 正确获取playerId
             const playerId = 'playerId' in action ? action.playerId : undefined;
             const playerName = getPlayerName(playerId);
+            const decision = decisionsByActionIndex[index];
 
             return (
               <div
@@ -214,12 +220,21 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
                   <span className={index === actions.length - 1 ? 'font-medium text-blue-700' : 'text-gray-600'}>
                     {formatAction(action, gameState)}
                   </span>
+                  {decision && (
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-gray-500">
+                      <span data-testid={`decision-source-${index}`} className={decisionBadgeClass(decision.source)}>
+                        {decision.source}
+                      </span>
+                      {decision.chosenOptionLabel && <span>{decision.chosenOptionLabel}</span>}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };

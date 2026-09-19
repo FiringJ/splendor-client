@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useUserStore } from '../store/userStore';
 import { GameState, GameAction, Player } from '../types/game';
+import { pickDecisionMeta } from '../lib/game/decisionMeta';
 import { useRoomStore } from '../store/roomStore';
 import { RoomState, CreateRoomResponse, JoinRoomResponse, StartGameResponse } from '../types/room';
 import { useSocketStore } from '../store/socketStore';
@@ -67,6 +68,7 @@ export const useSocket = () => {
           // 再更新游戏状态 - 使用适配函数转换
           console.log('Converting and updating game state with:', data.gameState);
           const clientGameState = adaptGameState(data.gameState);
+          useGameStore.getState().clearDecisions();
           setGameState(clientGameState);
 
           console.log('Game started successfully, all states updated');
@@ -77,12 +79,24 @@ export const useSocket = () => {
       });
 
       // 监听新的游戏状态更新事件
-      socket.on('gameStateUpdate', (data: { gameState: ServerGameState; action: GameAction }) => {
+      // decisionMeta 可选。服务端未下发时 pick/normalize 得到空值，界面不展示决策面板。
+      // 客户端不调用 Jev / OpenRouter，只读取服务端已经算好的元数据。
+      socket.on('gameStateUpdate', (data: {
+        gameState?: ServerGameState;
+        action?: GameAction;
+        decisionMeta?: unknown;
+        decision_meta?: unknown;
+      } | null) => {
         console.log('Game state updated:', data);
-        if (data.gameState) {
+        if (data?.gameState) {
           // 转换服务器状态为客户端状态
           const clientGameState = adaptGameState(data.gameState);
           setGameState(clientGameState);
+          useGameStore.getState().ingestDecisionUpdate(
+            clientGameState.actions?.length ?? 0,
+            pickDecisionMeta(data),
+            data.action?.type === 'RESTART_GAME',
+          );
 
           // 如果游戏已结束且有获胜者，显示获胜者信息
           if (clientGameState.winner) {
@@ -113,6 +127,8 @@ export const useSocket = () => {
               console.log('Successfully rejoined room:', response.room);
               setRoomState(response.room);
               if (response.room.gameState) {
+                // 重连后的房间状态不含历史决策，清掉以免标到错误的动作上。
+                useGameStore.getState().clearDecisions();
                 setGameState(response.room.gameState);
               }
             } else {
