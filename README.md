@@ -16,6 +16,10 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## 生产环境
+
+线上客户端域名是 [https://www.splendor.uno](https://www.splendor.uno)。浏览器里的 Socket 地址在 `pnpm build` 时写入包内（`NEXT_PUBLIC_API_URL`，未设置时生产回退到同一域名），由现有反代处理 TLS，不要写成 `http://localhost:3001`。`docker-compose.yml` 里的同名变量只是和构建保持一致，容器跑起来之后再改它，不会改已经发出去的前端代码。
+
 ## AI 决策展示（Jev）
 
 对局里的 AI 若由服务端 Jev 引擎落子，操作历史上方会多一块 **AI 决策** 面板。客户端只展示服务端已经算好的结果，**不会**在浏览器里调用 Jev、OpenRouter 或 TypeSafe。

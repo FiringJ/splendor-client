@@ -1,7 +1,9 @@
 FROM node:20-alpine
 
-# 安装 pnpm
-RUN npm install -g pnpm
+# 与 .github/workflows/deploy.yml 使用同一 pnpm。
+# 不固定版本时 npm 会装到 pnpm 10+，`pnpm install` 会因未批准的构建脚本失败：
+# ERR_PNPM_IGNORED_BUILDS（@sentry/cli、sharp）。
+RUN npm install -g pnpm@9.11.0
 
 WORKDIR /app
 
@@ -18,7 +20,9 @@ COPY public ./public
 RUN pnpm install --prod --frozen-lockfile
 
 # 设置生产环境变量
-ENV NODE_ENV production
+ENV NODE_ENV=production
+# 浏览器包里的地址在 CI 的 next build 阶段写入；这里与 docker-compose 保持一致。
+ENV NEXT_PUBLIC_API_URL=https://www.splendor.uno
 
 # 暴露应用运行的端口
 EXPOSE 3000

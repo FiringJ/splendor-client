@@ -3,6 +3,8 @@ name: Build and Deploy Client
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -30,6 +32,8 @@ jobs:
         run: pnpm run build
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
+          # 写入客户端包。运行时改 docker-compose 同名变量不会改已经构建的浏览器代码。
+          NEXT_PUBLIC_API_URL: https://www.splendor.uno
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -57,6 +61,8 @@ jobs:
 
   deploy:
     needs: build
+    # PR 只验证镜像能构建；推到 master 或手动触发才 SSH 到现有 VPS。
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Download Docker image artifact
