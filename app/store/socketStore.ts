@@ -33,10 +33,15 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       return socket;
     }
 
+    // NEXT_PUBLIC_API_URL 在 next build 时写入浏览器包。生产走站点同源，不指定端口。
+    const socketUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://www.splendor.uno'
+        : 'http://localhost:3001');
+
     const newSocket = io(
-      process.env.NODE_ENV === 'production' 
-        ? 'https://www.splendor.uno' // 使用域名，不需要指定端口
-        : 'http://localhost:3001',
+      socketUrl,
       {
         transports: ['websocket', 'polling'], // 添加 polling 作为备选
         secure: true, // 启用 SSL

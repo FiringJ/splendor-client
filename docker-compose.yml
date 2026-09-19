@@ -6,5 +6,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      # 浏览器实际连的是构建时写进包里的地址（见 deploy.yml 的 next build）。
+      # 生产必须是站点域名，由现有反代终结 TLS；localhost 会指到访问者自己的机器。
+      - NEXT_PUBLIC_API_URL=https://www.splendor.uno
     restart: unless-stopped

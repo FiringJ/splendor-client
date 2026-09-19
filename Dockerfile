@@ -7,6 +7,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+# 与 CI 一致：生产构建把 Socket 地址写进浏览器包。
+ENV NEXT_PUBLIC_API_URL=https://www.splendor.uno
 RUN npm run build
 
 # 运行阶段
@@ -20,6 +22,9 @@ RUN npm install --production
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./
+
+ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_URL=https://www.splendor.uno
 
 EXPOSE 3000
 
