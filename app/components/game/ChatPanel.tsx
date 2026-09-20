@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRoomStore } from '../../store/roomStore';
 import { useUserStore } from '../../store/userStore';
 import { useSocketStore } from '../../store/socketStore';
+import { useBoardChrome } from './boardChrome';
 
 interface Message {
   id: string;
@@ -27,6 +28,7 @@ export const ChatPanel = () => {
   const playerId = useUserStore(state => state.playerId);
   const playerName = useUserStore(state => state.playerName);
   const { socket } = useSocketStore();
+  const { sheetOpen } = useBoardChrome();
 
   // 初始化通知音效
   useEffect(() => {
@@ -111,7 +113,7 @@ export const ChatPanel = () => {
       {/* 浮动聊天按钮 */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-purple-700 transition-all z-40"
+        className={`fixed z-40 flex h-11 w-11 items-center justify-center rounded-full bg-purple-600 text-white shadow-sm transition-all hover:bg-purple-700 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] right-[max(0.5rem,env(safe-area-inset-right))] md:bottom-4 md:right-4 md:h-12 md:w-12 ${sheetOpen ? 'max-md:pointer-events-none max-md:opacity-0' : ''}`}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

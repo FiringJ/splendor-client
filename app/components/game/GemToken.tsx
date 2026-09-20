@@ -109,30 +109,16 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
       {hasSelectedGems && (
         <div className="flex justify-center gap-2">
           <button
-            className="px-3 py-1.5 bg-red-500 text-white rounded-md text-xs
-                      hover:bg-red-600 active:bg-red-700
-                      shadow-md shadow-red-500/30
-                      hover:shadow-lg hover:shadow-red-500/40
-                      active:shadow-sm
-                      transform active:scale-95
-                      transition-all duration-200
-                      font-medium
-                      disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            className="btn-ghost"
             onClick={onCancel}
             disabled={loading || isSubmitting}
           >
             取消
           </button>
           <button
-            className="px-3 py-1.5 bg-green-500 text-white rounded-md text-xs
-                      hover:bg-green-600 active:bg-green-700
-                      shadow-md shadow-green-500/30
-                      hover:shadow-lg hover:shadow-green-500/40
-                      active:shadow-sm
-                      transform active:scale-95
-                      transition-all duration-200
-                      font-medium
-                      disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            className="btn-confirm"
             onClick={handleConfirm}
             disabled={loading || isSubmitting}
           >
@@ -158,8 +144,7 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
         <button
           className={`
             relative 
-            // REQ-001: 调整宝石大小
-            w-12 h-12 md:w-14 md:h-14 rounded-full
+            w-14 h-14 rounded-full
             bg-gradient-to-br ${gemColorMap[gemType]}
             border
             ${remainingCount > 0 && !isDisabled ? 'cursor-pointer transform hover:-translate-y-1 hover:shadow-lg' : 'cursor-not-allowed'}
@@ -175,21 +160,29 @@ export const GemToken = ({ gems = {}, disabled, onConfirm, onCancel }: GemTokenP
           disabled={isDisabled}
           title={`${gemNameMap[gemType]} ${isGoldGem ? '(无法直接获取)' : `(剩余: ${remainingCount}, 已选: ${selectedCount})`}${isSelected ? '，右键点击减少' : ''}`}
         >
-          <span className="text-base md:text-lg font-bold relative z-10 text-white drop-shadow-md">
+          <span className={`relative z-10 text-lg font-bold drop-shadow-md ${gemType === 'diamond' || gemType === 'gold' ? 'text-slate-800' : 'text-white'}`}>
             {remainingCount}
           </span>
           {isSelected && (
-            <div className="absolute -top-1 -right-1 md:-top-1.5 md:-right-1.5 w-4 h-4 md:w-5 md:h-5 bg-yellow-400 rounded-full 
-                          flex items-center justify-center text-[9px] md:text-xs font-bold 
-                          shadow-md border border-yellow-300 animate-pulse">
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border border-amber-300 bg-amber-400 text-[10px] font-bold text-amber-950 shadow-sm">
               {selectedCount}
-            </div>
+            </span>
           )}
         </button>
-        <p className="mt-0.5 md:mt-1 text-[10px] md:text-xs font-medium text-gray-600 truncate w-12 md:w-14 text-center">
+        <p className="mt-1 text-[11px] font-medium text-slate-600 truncate w-14 text-center">
           {gemNameMap[gemType]}
-          {isGoldGem && <span className="block text-[9px] md:text-[10px] text-yellow-600">预留时获得</span>}
+          {isGoldGem && <span className="block text-[10px] text-amber-600">预留时获得</span>}
         </p>
+        {isSelected && !isGoldGem && (
+          <button
+            type="button"
+            aria-label={`减少${gemNameMap[gemType]}`}
+            className="btn-ghost mt-1 h-11 w-11 px-0"
+            onClick={(event) => handleGemRightClick(gemType, event)}
+          >
+            −
+          </button>
+        )}
       </div>
     );
   }

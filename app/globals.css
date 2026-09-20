@@ -7,8 +7,40 @@
   --foreground: #171717;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer components {
+  .surface {
+    @apply rounded-xl border border-indigo-100 bg-white/90 shadow-sm;
+  }
+
+  .btn {
+    @apply inline-flex min-h-11 touch-manipulation items-center justify-center rounded-lg px-3 text-sm font-medium shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 md:min-h-9 md:px-2.5 md:text-xs;
+  }
+
+  .btn-buy {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700;
+  }
+
+  .btn-reserve {
+    @apply btn bg-amber-500 text-white hover:bg-amber-600;
+  }
+
+  .btn-confirm {
+    @apply btn bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+
+  .btn-ghost {
+    @apply btn border border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50;
+  }
 }

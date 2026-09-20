@@ -29,9 +29,9 @@ export const Noble = ({ noble }: NobleProps) => {
   const position = getNoblePosition(noble.id);
 
   return (
-    <div className="w-20 h-28 rounded-lg bg-gradient-to-br from-purple-200 to-purple-400 
-                  shadow-md hover:shadow-lg transition-all duration-300 
-                  border border-purple-300
+    <div className="w-20 h-28 rounded-xl bg-gradient-to-br from-purple-200 to-purple-400 
+                  shadow-sm hover:shadow-md transition-all duration-300 
+                  border border-purple-200
                   flex flex-col items-center justify-between
                   relative overflow-hidden
                   group hover:-translate-y-1 hover:[transform:perspective(600px)_rotateY(5deg)]">

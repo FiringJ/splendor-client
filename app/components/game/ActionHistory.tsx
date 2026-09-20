@@ -153,7 +153,17 @@ const formatAction = (action: GameAction, gameState: GameStateType | null) => {
   }
 };
 
-export const ActionHistory = ({ actions }: ActionHistoryProps) => {
+interface ActionHistoryViewProps extends ActionHistoryProps {
+  /** When false, the list grows with its parent instead of nesting another scroller. */
+  framed?: boolean;
+  testId?: string;
+}
+
+export const ActionHistory = ({
+  actions,
+  framed = true,
+  testId = 'action-history',
+}: ActionHistoryViewProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const gameState = useGameStore(state => state.gameState);
   const latestDecision = useGameStore(state => state.latestDecision);
@@ -161,9 +171,9 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
 
   // 自动滚动到底部，当actions变化或actions长度变化时触发
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    const node = scrollRef.current;
+    if (!node || node.scrollHeight <= node.clientHeight) return;
+    node.scrollTop = node.scrollHeight;
   }, [actions, actions.length]);
 
   // 获取玩家名字的辅助函数
@@ -176,11 +186,13 @@ export const ActionHistory = ({ actions }: ActionHistoryProps) => {
   };
 
   return (
-    <div data-testid="action-history">
+    <div data-testid={testId}>
       {latestDecision && <DecisionPanel meta={latestDecision} />}
       <div
         ref={scrollRef}
-        className="bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-1.5 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+        className={framed
+          ? 'max-h-44 overflow-y-auto rounded-xl border border-indigo-100 bg-white/90 p-1.5 shadow-sm'
+          : 'overflow-visible'}
       >
       <h3 className="text-xs font-medium text-gray-700 mb-1 px-1 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">

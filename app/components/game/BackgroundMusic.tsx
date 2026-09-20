@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useBoardChrome } from './boardChrome';
 
 export const BackgroundMusic = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -8,6 +9,7 @@ export const BackgroundMusic = () => {
   const [showVolume, setShowVolume] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioLoaded, setAudioLoaded] = useState(false);
+  const { sheetOpen } = useBoardChrome();
 
   useEffect(() => {
     // 创建音频元素
@@ -72,11 +74,11 @@ export const BackgroundMusic = () => {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 z-40">
+    <div className={`fixed z-40 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] left-[max(0.5rem,env(safe-area-inset-left))] md:bottom-4 md:left-4 ${sheetOpen ? 'max-md:pointer-events-none max-md:opacity-0' : ''}`}>
       <div className="relative">
         <button
           onClick={togglePlay}
-          className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-indigo-100 bg-white shadow-sm transition-colors hover:bg-slate-50 md:h-12 md:w-12"
           title={isPlaying ? '暂停背景音乐' : '播放背景音乐'}
         >
           {isPlaying ? (

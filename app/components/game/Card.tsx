@@ -35,7 +35,7 @@ export const Card = ({ card, onPurchase, onReserve, disabled, isCardBack = false
     <div
       onClick={onClick}
       className={`
-      relative w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 rounded-lg
+      relative w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 rounded-xl
       bg-gradient-to-br ${cardColors[card.gem]}
       border
       ${disabled ? 'cursor-not-allowed' : isSelected ? 'z-30' : 'hover:-translate-y-1 hover:shadow-[0_8px_20px_-5px_rgba(0,0,0,0.25)] hover:[transform:perspective(600px)_rotateY(5deg)] cursor-pointer'}
