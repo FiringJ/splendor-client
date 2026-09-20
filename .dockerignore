@@ -6,12 +6,14 @@ logs
 tests
 coverage
 docs
+.github
 
 # 不需要的文件
 *.log
 *.md
-Dockerfile
 Dockerfile.ci
-.env.local
+fly.toml
+.env
+.env.*
 .vscode
 .idea

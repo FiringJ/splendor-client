@@ -21,8 +21,9 @@ RUN pnpm install --prod --frozen-lockfile
 
 # 设置生产环境变量
 ENV NODE_ENV=production
-# 浏览器包里的地址在 CI 的 next build 阶段写入；这里与 docker-compose 保持一致。
-ENV NEXT_PUBLIC_API_URL=https://www.splendor.uno
+# 浏览器包里的地址在 CI 的 next build 阶段写入；这里仅作文档/默认值对齐。
+# Fly 部署请用根目录 Dockerfile（standalone）+ build-arg，见 docs/fly-deploy.md。
+ENV NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev
 
 # 暴露应用运行的端口
 EXPOSE 3000

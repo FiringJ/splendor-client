@@ -16,9 +16,17 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 生产环境
+## 生产环境（Fly.io）
 
-线上客户端域名是 [https://www.splendor.uno](https://www.splendor.uno)。浏览器里的 Socket 地址在 `pnpm build` 时写入包内（`NEXT_PUBLIC_API_URL`，未设置时生产回退到同一域名），由现有反代处理 TLS，不要写成 `http://localhost:3001`。`docker-compose.yml` 里的同名变量只是和构建保持一致，容器跑起来之后再改它，不会改已经发出去的前端代码。
+客户端托管在 **Fly.io**（旧 VPS / `splendor.uno` 已弃用）。应用名建议：`splendor-client`（默认）或 `firingj-splendor-web`。
+
+浏览器里的 Socket 地址在 `pnpm build` / Docker build 时写入包内：
+
+- `NEXT_PUBLIC_API_URL`（推荐）或 `NEXT_PUBLIC_SOCKET_URL`（可选覆盖）
+- 未设置时生产默认：`https://splendor-server.fly.dev`（sibling server）
+- 开发默认：`http://localhost:3001`
+
+**先确认服务端 URL，再部署客户端**；改 URL 后必须重新构建。不要把密钥写进 `NEXT_PUBLIC_*`。完整步骤见 [docs/fly-deploy.md](docs/fly-deploy.md)。
 
 ## AI 决策展示（Jev）
 

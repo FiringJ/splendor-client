@@ -1,0 +1,37 @@
+# Fly.io app config for the Splendor Next.js client.
+# App name alternatives: splendor-client (default) | firingj-splendor-web
+#
+# Deploy AFTER the sibling server URL is known, and set NEXT_PUBLIC_* at build time:
+#   fly deploy --build-arg NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev
+# Or edit [build.args] below, then: fly deploy
+#
+# See docs/fly-deploy.md
+
+app = 'splendor-client'
+primary_region = 'sin'
+
+[build]
+  dockerfile = 'Dockerfile'
+  [build.args]
+    # Build-time only — baked into the browser bundle. Not a secret.
+    NEXT_PUBLIC_API_URL = 'https://splendor-server.fly.dev'
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '15s'
+    method = 'GET'
+    path = '/'
+
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
+  cpus = 1

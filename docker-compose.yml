@@ -6,7 +6,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      # 浏览器实际连的是构建时写进包里的地址（见 deploy.yml 的 next build）。
-      # 生产必须是站点域名，由现有反代终结 TLS；localhost 会指到访问者自己的机器。
-      - NEXT_PUBLIC_API_URL=https://www.splendor.uno
+      # 浏览器实际连的是构建时写进包里的地址（NEXT_PUBLIC_*）。
+      # 运行时再改此变量不会改已经发出去的前端代码。默认指向 sibling Fly server。
+      - NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev
     restart: unless-stopped

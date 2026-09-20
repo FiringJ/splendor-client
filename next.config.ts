@@ -2,7 +2,8 @@ import {withSentryConfig} from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Fly.io / Docker：standalone 产出可独立运行的 server.js，镜像更小。
+  output: "standalone",
 };
 
 export default withSentryConfig(nextConfig, {

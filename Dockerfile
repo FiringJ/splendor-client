@@ -1,31 +1,45 @@
-# 构建阶段
-FROM node:20-alpine AS builder
+# Fly.io / 本地生产镜像：Next.js standalone 多阶段构建。
+# NEXT_PUBLIC_* 必须在 build 阶段注入（会写入浏览器包）。
+# 示例：
+#   docker build --build-arg NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev -t splendor-client .
+#   fly deploy --build-arg NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev
 
+FROM node:20-alpine AS base
+RUN npm install -g pnpm@9.11.0
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+FROM base AS deps
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# 与 CI 一致：生产构建把 Socket 地址写进浏览器包。
-ENV NEXT_PUBLIC_API_URL=https://www.splendor.uno
-RUN npm run build
 
-# 运行阶段
-FROM node:20-alpine
+# 构建期公开变量（非密钥）。默认指向 sibling Fly server 应用。
+ARG NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev
+ARG NEXT_PUBLIC_SOCKET_URL=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
+# 无 Sentry 上传 token 时静默跳过，避免本地/Fly 构建噪音
+ENV CI=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
-WORKDIR /app
+RUN pnpm run build
 
-COPY package*.json ./
-RUN npm install --production
-
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./
-
+FROM base AS runner
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_URL=https://www.splendor.uno
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
 EXPOSE 3000
-
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
