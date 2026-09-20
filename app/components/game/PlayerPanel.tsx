@@ -143,35 +143,31 @@ export const PlayerPanel = ({ player, isActive }: PlayerPanelProps) => {
             {/* 使用 grid 实现两行，每行最多2个 */}
             <div className="grid grid-rows-2 grid-flow-col gap-x-1 gap-y-0 justify-center items-center min-h-[110px]">
               {player.reservedCards.length > 0 ? (
-                player.reservedCards.map((card) => (
-                  <div
-                    key={card.id}
-                    className="transform scale-[0.55] md:scale-[0.6] origin-center flex-shrink-0 -my-3 md:-my-2" // 调整 scale 和 margin
-                  >
-                    <div className="relative">
+                player.reservedCards.map((card) => {
+                  const canBuy = Boolean(gameState && isActive && GameValidator.canPurchaseCard(gameState, {
+                    type: 'PURCHASE_CARD',
+                    payload: { cardId: card.id },
+                  }));
+                  return (
+                  <div key={card.id} className="flex flex-col items-center">
+                    <div className="origin-top scale-[0.62] md:scale-[0.7]">
                       <Card
                         card={card}
                         disabled={!isActive}
                       />
-                      {isActive && GameValidator.canPurchaseCard(gameState!, {
-                        type: 'PURCHASE_CARD',
-                        payload: { cardId: card.id },
-                      }) && (
-                          <button
-                            onClick={() => handlePurchaseReservedCard(card)}
-                            className="absolute -bottom-4 left-1/2 -translate-x-1/2 
-                                  px-2 py-0.5 bg-blue-500 text-white text-xs rounded-md
-                                  shadow-md shadow-blue-500/30
-                                  hover:bg-blue-600 hover:shadow-blue-600/30
-                                  active:transform active:scale-95
-                                  transition-all duration-200 whitespace-nowrap"
-                          >
-                            购买
-                          </button>
-                        )}
                     </div>
+                    {canBuy && (
+                      <button
+                        type="button"
+                        onClick={() => handlePurchaseReservedCard(card)}
+                        className="btn-buy -mt-6 w-[6.5rem]"
+                      >
+                        购买
+                      </button>
+                    )}
                   </div>
-                ))
+                  );
+                })
               ) : (
                 <span className="row-span-2 flex items-center justify-center w-full h-full text-xs text-blue-400 italic">无预留卡</span>
               )}

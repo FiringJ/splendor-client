@@ -35,7 +35,7 @@ export function DecisionPanel({ meta }: { meta: DecisionMeta }) {
       data-testid="ai-decision-panel"
       aria-label="AI 决策"
       aria-live="polite"
-      className="mb-1.5 rounded-md border border-indigo-100 bg-indigo-50/90 px-2 py-1.5"
+      className="mb-1.5 rounded-xl border border-indigo-100 bg-indigo-50/90 px-2.5 py-2 shadow-sm"
     >
       <div className="mb-1 flex items-center justify-between gap-2">
         <h4 className="text-[11px] font-semibold text-indigo-900">AI 决策</h4>

@@ -7,6 +7,7 @@ import { useGameStore } from '../../store/gameStore';
 import { GameValidator } from '../../lib/game/validator';
 import type { Card as CardType } from '../../types/game';
 import { useSound } from '../../hooks/useSound';
+import { boardRowClass } from './boardLayout';
 
 const DeckCard = ({ level, count, onClick }: { level: number; count: number; onClick?: () => void }) => {
   const [showReserveButton, setShowReserveButton] = useState(false);
@@ -40,13 +41,14 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
   };
 
   return (
+    <div className="flex w-[6.5rem] flex-col md:w-28">
     <div
       className={`
-        relative w-[6.5rem] h-[8.5rem] md:w-28 md:h-40 rounded-lg
-        border border-gray-300
+        relative h-[8.5rem] w-full rounded-xl
+        border border-slate-200 md:h-40
         ${!count ? 'opacity-40 cursor-not-allowed' :
           'cursor-pointer hover:shadow-lg transition-all duration-300'}
-        shadow-md
+        shadow-sm
         overflow-hidden
       `}
       onMouseEnter={() => count > 0 && setShowReserveButton(true)}
@@ -73,23 +75,29 @@ const DeckCard = ({ level, count, onClick }: { level: number; count: number; onC
         <span className="text-xs font-bold">{count}</span>
       </div>
 
-      {/* 预留按钮 - 只有在可以预留时显示 */}
+      {/* 桌面：悬停后才出现。手机上悬停不可靠，按钮单独放在卡牌下方。 */}
       {showReserveButton && canReserveFromDeck && onClick && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
+        <div className="absolute inset-0 hidden items-center justify-center bg-black/35 backdrop-blur-[1px] md:flex">
           <button
+            type="button"
             onClick={handleButtonClick}
-            className="px-3 py-1.5 bg-yellow-500 text-white rounded-md text-xs
-                     hover:bg-yellow-600 active:bg-yellow-700
-                     shadow-md shadow-yellow-500/30
-                     hover:shadow-lg hover:shadow-yellow-500/40
-                     transform active:scale-95
-                     transition-all duration-200
-                     font-medium"
+            className="btn-reserve"
           >
             预留卡牌
           </button>
         </div>
       )}
+    </div>
+    {canReserveFromDeck && onClick && (
+      <button
+        type="button"
+        onClick={handleButtonClick}
+        aria-label={`预留${level}级牌堆`}
+        className="btn-reserve mt-1 w-full md:hidden"
+      >
+        预留
+      </button>
+    )}
     </div>
   );
 };
@@ -185,49 +193,65 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
 
     const isHovered = hoveredCardId === card.id;
 
+    const showTouchActions = !disabled && (canPurchase || canReserve);
+
     return (
       <div
-        className="relative"
+        className="flex w-[6.5rem] flex-col md:w-28"
         onMouseEnter={() => handleCardMouseEnter(card.id)}
         onMouseLeave={handleCardMouseLeave}
       >
-        <Card
-          key={card.id}
-          card={card}
-          disabled={disabled}
-          isSelected={false}
-        />
+        <div className="relative">
+          <Card
+            key={card.id}
+            card={card}
+            disabled={disabled}
+            isSelected={false}
+          />
 
-        {/* 悬停时的操作按钮 */}
-        {isHovered && !disabled && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/30 backdrop-blur-[1px]">
+          {isHovered && !disabled && (
+            <div className="absolute inset-0 hidden flex-col items-center justify-center gap-2 bg-black/35 backdrop-blur-[1px] md:flex">
+              {canPurchase && (
+                <button
+                  type="button"
+                  onClick={() => handleCardPurchase(card.id)}
+                  className="btn-buy"
+                >
+                  购买卡牌
+                </button>
+              )}
+
+              {canReserve && (
+                <button
+                  type="button"
+                  onClick={() => handleCardReserve(card.id)}
+                  className="btn-reserve"
+                >
+                  预留卡牌
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {showTouchActions && (
+          <div className="mt-1 grid grid-cols-2 gap-1 md:hidden">
             {canPurchase && (
               <button
+                type="button"
                 onClick={() => handleCardPurchase(card.id)}
-                className="px-3 py-1.5 bg-blue-500 text-white rounded-md text-xs
-                         hover:bg-blue-600 active:bg-blue-700
-                         shadow-md shadow-blue-500/30
-                         hover:shadow-lg hover:shadow-blue-500/40
-                         transform active:scale-95
-                         transition-all duration-200
-                         font-medium"
+                className="btn-buy !px-1 text-xs"
               >
-                购买卡牌
+                购买
               </button>
             )}
-
             {canReserve && (
               <button
+                type="button"
                 onClick={() => handleCardReserve(card.id)}
-                className="px-3 py-1.5 bg-yellow-500 text-white rounded-md text-xs
-                         hover:bg-yellow-600 active:bg-yellow-700
-                         shadow-md shadow-yellow-500/30
-                         hover:shadow-lg hover:shadow-yellow-500/40
-                         transform active:scale-95
-                         transition-all duration-200
-                         font-medium"
+                className={`btn-reserve !px-1 text-xs ${canPurchase ? '' : 'col-span-2'}`}
               >
-                预留卡牌
+                预留
               </button>
             )}
           </div>
@@ -236,82 +260,43 @@ export const CardDisplay = ({ cards, onPurchase, onReserve, disabled }: CardDisp
     );
   };
 
+  const renderLevel = (
+    level: 1 | 2 | 3,
+    title: string,
+    tone: string,
+    badge: string,
+    faceUp: CardType[],
+    deckCount: number,
+  ) => (
+    <div className={`rounded-xl py-1.5 shadow-sm ${tone}`}>
+      <h4 className="mb-2 flex items-center text-sm font-semibold">
+        <span className={`mr-2 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${badge}`}>
+          {level}
+        </span>
+        {title}
+      </h4>
+      <div className={boardRowClass}>
+        <DeckCard
+          level={level}
+          count={deckCount}
+          onClick={!disabled ? () => handleDeckReserve(level) : undefined}
+        />
+        <div className="grid min-w-0 grid-cols-2 justify-items-start gap-2 md:grid-cols-3 xl:grid-cols-4">
+          {faceUp.map((card) => (
+            <div key={card.id} className="min-w-0">
+              {renderCardWithHoverControls(card)}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-2 md:gap-3 max-w-6xl mx-auto p-1 md:p-0">
-      {/* Level 3 - 高级卡牌 */}
-      <div className="bg-gradient-to-r from-purple-50 to-transparent p-2 rounded-lg shadow-sm">
-        <h4 className="text-sm md:text-base font-bold text-purple-800 mb-2 flex items-center">
-          <span className="w-5 h-5 md:w-6 md:h-6 mr-1.5 md:mr-2 bg-purple-100 rounded-full flex items-center justify-center text-purple-700">3</span>
-          高级卡牌
-        </h4>
-        <div className="flex items-start">
-          {/* 牌堆 */}
-          <div className="flex-shrink-0 mr-2 md:mr-4">
-            <DeckCard
-              level={3}
-              count={safeCards.deck3.length}
-              onClick={!disabled ? () => handleDeckReserve(3) : undefined}
-            />
-          </div>
-
-          {/* 卡牌展示区 - REQ-001: 调整小屏幕列数 */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2 lg:gap-4 justify-items-center w-full">
-            {safeCards.level3.map((card) => (
-              <div key={card.id}>
-                {renderCardWithHoverControls(card)}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Level 2 - 中级卡牌 */}
-      <div className="bg-gradient-to-r from-blue-50 to-transparent p-2 rounded-lg shadow-sm">
-        <h4 className="text-sm md:text-base font-bold text-blue-800 mb-2 flex items-center">
-          <span className="w-5 h-5 md:w-6 md:h-6 mr-1.5 md:mr-2 bg-blue-100 rounded-full flex items-center justify-center text-blue-700">2</span>
-          中级卡牌
-        </h4>
-        <div className="flex items-start">
-          <div className="flex-shrink-0 mr-2 md:mr-4">
-            <DeckCard
-              level={2}
-              count={safeCards.deck2.length}
-              onClick={!disabled ? () => handleDeckReserve(2) : undefined}
-            />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2 lg:gap-4 justify-items-center w-full">
-            {safeCards.level2.map((card) => (
-              <div key={card.id}>
-                {renderCardWithHoverControls(card)}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Level 1 - 初级卡牌 */}
-      <div className="bg-gradient-to-r from-green-50 to-transparent p-2 rounded-lg shadow-sm">
-        <h4 className="text-sm md:text-base font-bold text-green-800 mb-2 flex items-center">
-          <span className="w-5 h-5 md:w-6 md:h-6 mr-1.5 md:mr-2 bg-green-100 rounded-full flex items-center justify-center text-green-700">1</span>
-          初级卡牌
-        </h4>
-        <div className="flex items-start">
-          <div className="flex-shrink-0 mr-2 md:mr-4">
-            <DeckCard
-              level={1}
-              count={safeCards.deck1.length}
-              onClick={!disabled ? () => handleDeckReserve(1) : undefined}
-            />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2 lg:gap-4 justify-items-center w-full">
-            {safeCards.level1.map((card) => (
-              <div key={card.id}>
-                {renderCardWithHoverControls(card)}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto flex max-w-6xl flex-col gap-2">
+      {renderLevel(3, '高级卡牌', 'bg-gradient-to-r from-purple-50 to-transparent text-purple-900', 'bg-purple-100 text-purple-700', safeCards.level3, safeCards.deck3.length)}
+      {renderLevel(2, '中级卡牌', 'bg-gradient-to-r from-blue-50 to-transparent text-blue-900', 'bg-blue-100 text-blue-700', safeCards.level2, safeCards.deck2.length)}
+      {renderLevel(1, '初级卡牌', 'bg-gradient-to-r from-emerald-50 to-transparent text-emerald-900', 'bg-emerald-100 text-emerald-700', safeCards.level1, safeCards.deck1.length)}
     </div>
   );
 }; 
