@@ -33,11 +33,13 @@ export const useSocketStore = create<SocketStore>((set, get) => ({
       return socket;
     }
 
-    // NEXT_PUBLIC_API_URL 在 next build 时写入浏览器包。生产走站点同源，不指定端口。
+    // NEXT_PUBLIC_* 在 next build 时写入浏览器包；运行时再改环境变量无效。
+    // 优先 SOCKET_URL，其次 API_URL；生产默认指向 sibling Fly server。
     const socketUrl =
+      process.env.NEXT_PUBLIC_SOCKET_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
       (process.env.NODE_ENV === 'production'
-        ? 'https://www.splendor.uno'
+        ? 'https://splendor-server.fly.dev'
         : 'http://localhost:3001');
 
     const newSocket = io(

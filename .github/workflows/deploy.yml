@@ -32,8 +32,9 @@ jobs:
         run: pnpm run build
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
-          # 写入客户端包。运行时改 docker-compose 同名变量不会改已经构建的浏览器代码。
-          NEXT_PUBLIC_API_URL: https://www.splendor.uno
+          # 写入客户端包（构建期）。默认 sibling Fly server；见 docs/fly-deploy.md。
+          # 运行时改 docker-compose / Fly secrets 同名变量不会改已经构建的浏览器代码。
+          NEXT_PUBLIC_API_URL: https://splendor-server.fly.dev
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
