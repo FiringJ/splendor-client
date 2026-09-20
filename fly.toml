@@ -1,19 +1,15 @@
-# Fly.io app config for the Splendor Next.js client.
-# App name alternatives: splendor-client (default) | firingj-splendor-web
+# fly.toml app configuration file generated for splendor-client on 2026-09-20T14:02:17Z
 #
-# Deploy AFTER the sibling server URL is known, and set NEXT_PUBLIC_* at build time:
-#   fly deploy --build-arg NEXT_PUBLIC_API_URL=https://splendor-server.fly.dev
-# Or edit [build.args] below, then: fly deploy
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
-# See docs/fly-deploy.md
 
 app = 'splendor-client'
-primary_region = 'sin'
+primary_region = 'ord'
 
 [build]
   dockerfile = 'Dockerfile'
+
   [build.args]
-    # Build-time only — baked into the browser bundle. Not a secret.
     NEXT_PUBLIC_API_URL = 'https://splendor-server.fly.dev'
 
 [http_service]
@@ -35,3 +31,4 @@ primary_region = 'sin'
   memory = '512mb'
   cpu_kind = 'shared'
   cpus = 1
+  memory_mb = 512
