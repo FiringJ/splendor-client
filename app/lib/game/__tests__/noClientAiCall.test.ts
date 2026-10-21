@@ -18,7 +18,9 @@ describe('client AI boundary', () => {
   it('does not call OpenRouter or TypeSafe and does not expose API keys', () => {
     const sources = collectSource(path.join(process.cwd(), 'app')).join('\n');
     expect(sources).not.toMatch(/openrouter\.ai/i);
-    expect(sources).not.toMatch(/NEXT_PUBLIC_[A-Z0-9_]*(KEY|TOKEN|SECRET)/);
+    // NEXT_PUBLIC_SUPABASE_ANON_KEY is intentionally public (PostgREST pageview insert).
+    const withoutPublicAnon = sources.replace(/NEXT_PUBLIC_SUPABASE_ANON_KEY/g, '');
+    expect(withoutPublicAnon).not.toMatch(/NEXT_PUBLIC_[A-Z0-9_]*(KEY|TOKEN|SECRET)/);
     expect(sources).not.toMatch(/OPENROUTER_API_KEY|TYPESAFE_API_KEY/);
     expect(sources).not.toMatch(/from ['"]openai['"]|from ['"]@typesafe\//);
   });
