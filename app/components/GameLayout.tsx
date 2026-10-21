@@ -5,7 +5,11 @@ import { GameBoard } from './game/GameBoard';
 import { GameSetup } from './game/GameSetup';
 import { useGameStore } from '../store/gameStore';
 
-export default function GameLayout() {
+type GameLayoutProps = {
+  initialRoomId?: string;
+};
+
+export default function GameLayout({ initialRoomId = '' }: GameLayoutProps) {
   // 初始化socket连接，当前玩家连接到服务端
   useSocket();
   const gameState = useGameStore(state => state.gameState);
@@ -54,7 +58,7 @@ export default function GameLayout() {
           </div>
         )}
         <div>
-          {gameState ? <GameBoard /> : <GameSetup />}
+          {gameState ? <GameBoard /> : <GameSetup initialRoomId={initialRoomId} />}
         </div>
       </div>
     </main>
