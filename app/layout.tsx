@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { SentryUserTracker } from "./components/SentryUserTracker";
+import { PageviewTracker } from "./components/PageviewTracker";
 import PlausibleProvider from "next-plausible";
 
 const geistSans = Geist({
@@ -66,6 +67,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <SentryUserTracker />
+          <PageviewTracker />
           <PlausibleProvider domain="splendor.uno">
             {children}
           </PlausibleProvider>

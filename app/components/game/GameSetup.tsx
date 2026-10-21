@@ -9,12 +9,18 @@ import { GameRules } from './GameRules';
 import { Spinner } from '../ui/Spinner';
 import { useSocketStore } from '../../store/socketStore';
 import { useUserStore } from '../../store/userStore';
+import { parseRoomQueryParam } from '../../lib/parseRoomQueryParam';
 
-export function GameSetup() {
+type GameSetupProps = {
+  initialRoomId?: string;
+};
+
+export function GameSetup({ initialRoomId = '' }: GameSetupProps) {
+  const prefillsRoom = parseRoomQueryParam(initialRoomId);
   const [playerCount, setPlayerCount] = useState('2');
   const [roomId, setRoomId] = useState('');
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
-  const [mode, setMode] = useState<'local' | 'online'>('local');
+  const [mode, setMode] = useState<'local' | 'online'>(prefillsRoom ? 'online' : 'local');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { createRoom, joinRoom, startGame } = useSocket();
@@ -23,7 +29,7 @@ export function GameSetup() {
   const [playerId] = useState(() => `player_${Math.random().toString(36).substr(2, 9)}`);
   const userStore = useUserStore();
   const [playerName, setPlayerName] = useState(userStore.playerName || '');
-  const [roomIdToJoin, setRoomIdToJoin] = useState('');
+  const [roomIdToJoin, setRoomIdToJoin] = useState(prefillsRoom);
   const [copiedRoomId, setCopiedRoomId] = useState(false);
   const { socket } = useSocketStore();
   const plausible = usePlausible();
@@ -138,8 +144,9 @@ export function GameSetup() {
     }
   };
 
-  const handleCopyRoomId = () => {
-    navigator.clipboard.writeText(roomId);
+  const handleCopyShareLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    navigator.clipboard.writeText(`${origin}/?room=${roomId}`);
     setCopiedRoomId(true);
     setTimeout(() => setCopiedRoomId(false), 2000);
   };
@@ -340,17 +347,20 @@ export function GameSetup() {
                     <span className="font-medium text-gray-700">房间号:</span>
                     <span className="font-mono bg-white px-3 py-1 rounded border select-all">{roomId}</span>
                     <button
-                      onClick={handleCopyRoomId}
-                      className="text-blue-500 hover:text-blue-600"
-                      title="复制房间号"
+                      onClick={handleCopyShareLink}
+                      className="text-blue-500 hover:text-blue-600 text-sm inline-flex items-center gap-1"
+                      title="复制分享链接"
                     >
                       {copiedRoomId ? (
                         <span className="text-green-500 text-xs">已复制!</span>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                          <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                        </svg>
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                            <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                          </svg>
+                          <span>复制分享链接</span>
+                        </>
                       )}
                     </button>
                   </div>
