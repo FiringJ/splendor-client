@@ -54,8 +54,12 @@ export const useUserStore = create<UserStore>((set) => ({
 
   clearPlayer: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('splendor_playerId');
-      localStorage.removeItem('splendor_playerName');
+      try {
+        localStorage.removeItem('splendor_playerId');
+        localStorage.removeItem('splendor_playerName');
+      } catch (error) {
+        console.error('Failed to clear user data from localStorage:', error);
+      }
     }
     set({ playerId: null, playerName: null });
   },
