@@ -1,5 +1,7 @@
 # Fly.io 部署说明 / Fly.io deploy notes
 
+第一波入口 / 测量发布前的所有者交接清单见 [first-wave-release-handoff.md](./first-wave-release-handoff.md)（合并不等于线上发布；统计构建参数缺口与回退条件写在那里）。
+
 客户端托管在 Fly.io（旧 VPS / `splendor.uno` 已弃用）。Socket 地址在 **Next 构建时**写入浏览器包，必须先确认 sibling 服务端 URL，再部署客户端。
 
 The Next.js client is hosted on Fly.io (legacy VPS / `splendor.uno` abandoned). The Socket URL is baked in at **build time** — deploy the client only after the sibling server URL is known.
